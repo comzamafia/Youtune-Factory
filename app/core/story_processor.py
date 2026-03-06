@@ -24,22 +24,24 @@ _IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".webp", ".bmp"}
 # ── Media Assignment ──────────────────────────────────────────────────────────
 
 
-def assign_media_to_scenes(scenes: list[Scene], db: Session) -> None:
-    """Scan ``input/media/`` and assign user-supplied media to scenes.
+def assign_media_to_scenes(scenes: list[Scene], db: Session, novel_id: str | None = None) -> None:
+    """Scan ``input/media/{novel_id}/`` and assign user-supplied media to scenes.
 
     Videos and images found in the media directory are interleaved
     (image, video, image, video, …) and assigned to scenes in order,
     cycling back to the start if there are more scenes than media files.
 
-    - Scenes assigned an image have ``image_path`` set (skips AI generation).
-    - Scenes assigned a video have ``video_source_path`` set (rendered with
-      the video looped to match TTS audio duration; skips AI image generation).
-    - Scenes that receive no media from the pool are left untouched (AI image
-      will be generated as normal).
-
-    If ``input/media/`` does not exist or is empty, the function is a no-op.
+    If no novel-specific media exists, falls back to the global ``input/media/``.
     """
-    media_dir = settings.media_input_dir
+    # Try per-novel dir first, then global fallback
+    media_dir = None
+    if novel_id:
+        per_novel = settings.media_input_dir / str(novel_id)
+        if per_novel.exists():
+            media_dir = per_novel
+    if media_dir is None:
+        media_dir = settings.media_input_dir
+
     if not media_dir.exists():
         logger.info("No media directory found at %s — skipping media assignment", media_dir)
         return

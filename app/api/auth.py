@@ -1,13 +1,45 @@
-"""API authentication — Bearer token validation."""
+"""API authentication — Bearer token validation + simple login."""
 
 from __future__ import annotations
 
-from fastapi import Depends, HTTPException, status
+import hmac
+
+from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from pydantic import BaseModel
 
 from app.config import settings
 
 _bearer_scheme = HTTPBearer()
+
+router = APIRouter(prefix="/auth", tags=["auth"])
+
+
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+
+class LoginResponse(BaseModel):
+    token: str
+    message: str
+
+
+@router.post("/login", response_model=LoginResponse)
+def login(body: LoginRequest):
+    """Authenticate with username & password, returns Bearer token."""
+    if (
+        hmac.compare_digest(body.username, settings.admin_username)
+        and hmac.compare_digest(body.password, settings.admin_password)
+    ):
+        return LoginResponse(
+            token=settings.api_secret_key,
+            message="Login successful",
+        )
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Invalid username or password",
+    )
 
 
 async def verify_token(
@@ -18,7 +50,7 @@ async def verify_token(
 
     Returns the token string if valid; raises 401 otherwise.
     """
-    if credentials.credentials != settings.api_secret_key:
+    if not hmac.compare_digest(credentials.credentials, settings.api_secret_key):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or missing API key",

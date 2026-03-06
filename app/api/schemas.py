@@ -130,8 +130,14 @@ class BatchPipelineResponse(BaseModel):
 # ── Media ──────────────────────────────────────────────────────────────────────
 
 
+class MediaFileInfo(BaseModel):
+    name: str
+    type: str  # "image" or "video"
+    size: int  # bytes
+
+
 class MediaListResponse(BaseModel):
-    files: list[str]
+    files: list[MediaFileInfo]
     count: int
 
 

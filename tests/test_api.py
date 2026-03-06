@@ -57,9 +57,14 @@ def teardown_module():
 def test_root_health():
     resp = client.get("/")
     assert resp.status_code == 200
-    data = resp.json()
-    assert data["service"] == "AI YouTube Novel Factory"
-    assert data["status"] == "running"
+    # Returns HTML if frontend/index.html exists, otherwise JSON fallback
+    ct = resp.headers.get("content-type", "")
+    if "json" in ct:
+        data = resp.json()
+        assert data["service"] == "AI YouTube Novel Factory"
+        assert data["status"] == "running"
+    else:
+        assert "html" in ct.lower()
 
 
 def test_api_health():

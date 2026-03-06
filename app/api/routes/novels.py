@@ -167,18 +167,38 @@ def trigger_batch_pipeline(
     )
 
 
-# ── Media Upload ──────────────────────────────────────────────────────────────
+# ── Per-Novel Media Upload ────────────────────────────────────────────────────
+
+_IMAGE_EXTS_ONLY = {".jpg", ".jpeg", ".png", ".webp", ".bmp"}
+_VIDEO_EXTS_ONLY = {".mp4", ".mov", ".avi", ".mkv", ".webm"}
 
 
-@router.post("/media/upload", status_code=201)
+def _novel_media_dir(novel_id: uuid.UUID) -> Path:
+    """Return input/media/{novel_id}/ — creates if absent."""
+    d = settings.media_input_dir / str(novel_id)
+    d.mkdir(parents=True, exist_ok=True)
+    return d
+
+
+def _media_type(ext: str) -> str:
+    if ext in _IMAGE_EXTS_ONLY:
+        return "image"
+    return "video"
+
+
+@router.post("/{novel_id}/media/upload", status_code=201)
 async def upload_media(
+    novel_id: uuid.UUID,
     files: list[UploadFile] = File(...),
+    db: Session = Depends(get_db),
     _token: str = Depends(verify_token),
 ):
-    """Upload images/videos to input/media/ for mixed-media rendering."""
-    media_dir = settings.media_input_dir
-    media_dir.mkdir(parents=True, exist_ok=True)
+    """Upload images/videos for a specific novel."""
+    novel = db.query(Novel).filter(Novel.id == novel_id).first()
+    if not novel:
+        raise HTTPException(404, "Novel not found")
 
+    media_dir = _novel_media_dir(novel_id)
     saved = []
     for f in files:
         ext = Path(f.filename or "").suffix.lower()
@@ -187,31 +207,51 @@ async def upload_media(
         raw = await f.read()
         if len(raw) > _MAX_MEDIA_SIZE:
             raise HTTPException(400, f"File '{f.filename}' too large ({len(raw):,} bytes, max {_MAX_MEDIA_SIZE:,})")
-        dest = media_dir / f.filename
+        safe_name = Path(f.filename or "file").name
+        dest = media_dir / safe_name
         dest.write_bytes(raw)
-        saved.append(f.filename)
+        saved.append(safe_name)
 
-    return {"uploaded": saved, "count": len(saved), "directory": str(media_dir)}
+    return {"uploaded": saved, "count": len(saved)}
 
 
-@router.get("/media/list", response_model=MediaListResponse)
-def list_media(_token: str = Depends(verify_token)):
-    """List all files currently in input/media/."""
-    media_dir = settings.media_input_dir
+@router.get("/{novel_id}/media", response_model=MediaListResponse)
+def list_media(
+    novel_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    _token: str = Depends(verify_token),
+):
+    """List media files associated with a novel."""
+    novel = db.query(Novel).filter(Novel.id == novel_id).first()
+    if not novel:
+        raise HTTPException(404, "Novel not found")
+
+    media_dir = settings.media_input_dir / str(novel_id)
     if not media_dir.exists():
         return MediaListResponse(files=[], count=0)
-    files = sorted(
-        f.name for f in media_dir.iterdir()
-        if f.is_file() and f.suffix.lower() in _MEDIA_EXTS
-    )
-    return MediaListResponse(files=files, count=len(files))
+
+    from app.api.schemas import MediaFileInfo
+    items = []
+    for f in sorted(media_dir.iterdir()):
+        ext = f.suffix.lower()
+        if f.is_file() and ext in _MEDIA_EXTS:
+            items.append(MediaFileInfo(name=f.name, type=_media_type(ext), size=f.stat().st_size))
+    return MediaListResponse(files=items, count=len(items))
 
 
-@router.delete("/media/{filename}", status_code=204)
-def delete_media(filename: str, _token: str = Depends(verify_token)):
-    """Delete a single file from input/media/."""
-    media_dir = settings.media_input_dir
-    # Prevent path traversal
+@router.delete("/{novel_id}/media/{filename}", status_code=204)
+def delete_media(
+    novel_id: uuid.UUID,
+    filename: str,
+    db: Session = Depends(get_db),
+    _token: str = Depends(verify_token),
+):
+    """Delete a single media file for a novel."""
+    novel = db.query(Novel).filter(Novel.id == novel_id).first()
+    if not novel:
+        raise HTTPException(404, "Novel not found")
+
+    media_dir = settings.media_input_dir / str(novel_id)
     safe_name = Path(filename).name
     target = media_dir / safe_name
     if not target.exists() or not target.is_file():

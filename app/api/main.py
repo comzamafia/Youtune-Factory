@@ -11,6 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
+from app.api.auth import router as auth_router
 from app.api.routes import jobs, novels, videos
 from app.config import settings
 from app.core.database import init_db
@@ -65,6 +66,7 @@ app.add_middleware(
 )
 
 # Include routers
+app.include_router(auth_router, prefix="/api/v1")
 app.include_router(novels.router, prefix="/api/v1")
 app.include_router(jobs.router, prefix="/api/v1")
 app.include_router(videos.router, prefix="/api/v1")

@@ -115,7 +115,7 @@ def _pipeline_after_script(self, script_result: dict, novel_id: str, pipeline_jo
 
         # Assign user-supplied media from input/media/ before generating images.
         # Scenes that receive a video/image here will skip AI image generation.
-        assign_media_to_scenes(scenes, db)
+        assign_media_to_scenes(scenes, db, novel_id=novel_id)
 
         # Group scenes by part_number for multi-part video support
         part_groups: dict[int, list[Scene]] = {}

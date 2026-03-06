@@ -36,6 +36,8 @@ class Settings(BaseSettings):
 
     # ── API Security ───────────────────────────────────────────────────
     api_secret_key: str = "change-me-to-a-secure-random-string"
+    admin_username: str = "admin"
+    admin_password: str = "admin"
 
     # ── LLM ────────────────────────────────────────────────────────────
     llm_api_base_url: str = "http://localhost:11434/v1"

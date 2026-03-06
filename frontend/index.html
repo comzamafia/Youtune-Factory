@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="th">
 <head>
 <meta charset="UTF-8">
@@ -9,9 +9,7 @@
 :root{--bg:#0f172a;--surface:#1e293b;--surface2:#334155;--border:#475569;--text:#e2e8f0;--text2:#94a3b8;--accent:#3b82f6;--accent2:#2563eb;--green:#22c55e;--red:#ef4444;--yellow:#eab308;--orange:#f97316}
 body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
 a{color:var(--accent);text-decoration:none}
-
-/* Layout */
-.container{max-width:1200px;margin:0 auto;padding:20px}
+.container{max-width:1100px;margin:0 auto;padding:20px}
 header{background:var(--surface);border-bottom:1px solid var(--border);padding:16px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
 header h1{font-size:18px;font-weight:600}
 header h1 span{color:var(--accent)}
@@ -22,443 +20,518 @@ header h1 span{color:var(--accent)}
 
 /* Login */
 #loginScreen{display:flex;align-items:center;justify-content:center;min-height:80vh}
-.login-box{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:40px;width:400px;text-align:center}
-.login-box h2{margin-bottom:24px;font-size:20px}
-.login-box input{width:100%;padding:12px 16px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:14px;margin-bottom:16px}
+.login-box{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:40px;width:380px;text-align:center}
+.login-box h2{margin-bottom:8px;font-size:20px}
+.login-box p{color:var(--text2);font-size:13px;margin-bottom:24px}
+.login-box input{width:100%;padding:12px 16px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:14px;margin-bottom:12px}
 .login-box input:focus{outline:none;border-color:var(--accent)}
+.login-error{color:var(--red);font-size:13px;margin-bottom:12px;display:none}
 
 /* Buttons */
-.btn{padding:10px 20px;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:500;transition:all .15s}
+.btn{padding:10px 20px;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:500;transition:all .15s;display:inline-flex;align-items:center;gap:6px}
 .btn-primary{background:var(--accent);color:#fff}.btn-primary:hover{background:var(--accent2)}
 .btn-danger{background:var(--red);color:#fff;opacity:.8}.btn-danger:hover{opacity:1}
 .btn-sm{padding:6px 14px;font-size:13px}
 .btn-success{background:var(--green);color:#fff}.btn-success:hover{opacity:.9}
-.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn-outline{background:transparent;border:1px solid var(--border);color:var(--text2)}.btn-outline:hover{border-color:var(--accent);color:var(--accent)}
+.btn:disabled{opacity:.4;cursor:not-allowed;pointer-events:none}
+.btn .spinner{display:none;width:14px;height:14px;border:2px solid transparent;border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite}
+.btn.loading .spinner{display:inline-block}
+.btn.loading{pointer-events:none;opacity:.7}
+@keyframes spin{to{transform:rotate(360deg)}}
 
 /* Tabs */
-.tabs{display:flex;gap:4px;margin-bottom:24px;border-bottom:1px solid var(--border);padding-bottom:0}
+.tabs{display:flex;gap:4px;margin-bottom:24px;border-bottom:1px solid var(--border)}
 .tab{padding:10px 20px;cursor:pointer;border-bottom:2px solid transparent;color:var(--text2);font-size:14px;transition:all .15s}
 .tab:hover{color:var(--text)}
 .tab.active{color:var(--accent);border-bottom-color:var(--accent)}
 .tab-content{display:none}.tab-content.active{display:block}
 
 /* Cards */
-.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:16px}
-.card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:16px;transition:border-color .15s}
+.card:hover{border-color:var(--accent)}
+.card-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px}
 .card-title{font-size:16px;font-weight:600}
-.card-actions{display:flex;gap:8px}
+.card-meta{color:var(--text2);font-size:12px}
+.card-actions{display:flex;gap:8px;flex-wrap:wrap}
 
 /* Status badge */
-.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:500}
-.badge-pending{background:#eab30822;color:var(--yellow)}
-.badge-running{background:#3b82f622;color:var(--accent)}
-.badge-completed{background:#22c55e22;color:var(--green)}
-.badge-failed{background:#ef444422;color:var(--red)}
-.badge-queued{background:#f9731622;color:var(--orange)}
+.badge{display:inline-block;padding:3px 10px;border-radius:99px;font-size:12px;font-weight:500}
+.badge-pending{background:#854d0e33;color:var(--yellow)}
+.badge-processing,.badge-running{background:#1d4ed833;color:var(--accent)}
+.badge-completed{background:#16653233;color:var(--green)}
+.badge-failed{background:#991b1b33;color:var(--red)}
+.badge-draft{background:var(--surface2);color:var(--text2)}
 
-/* Form */
-.form-group{margin-bottom:16px}
-.form-group label{display:block;margin-bottom:6px;font-size:13px;color:var(--text2);font-weight:500}
-.form-group input,.form-group textarea{width:100%;padding:10px 14px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:14px;font-family:inherit}
-.form-group textarea{min-height:200px;resize:vertical}
-.form-group input:focus,.form-group textarea:focus{outline:none;border-color:var(--accent)}
+/* Toast */
+#toastContainer{position:fixed;top:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:8px}
+.toast{padding:12px 20px;border-radius:8px;font-size:14px;color:#fff;animation:slideIn .3s ease;max-width:360px;box-shadow:0 4px 12px #0005}
+.toast-success{background:#16a34a}
+.toast-error{background:#dc2626}
+.toast-info{background:#2563eb}
+@keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
 
-/* Table */
-.info-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-top:12px}
-.info-item{background:var(--bg);padding:12px;border-radius:8px}
-.info-label{font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
-.info-value{font-size:14px;font-weight:500}
+/* Media Section in novel card */
+.media-section{margin-top:14px;padding-top:14px;border-top:1px solid var(--border)}
+.media-section h4{font-size:13px;color:var(--text2);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.media-grid{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+.media-item{position:relative;background:var(--surface2);border-radius:6px;padding:8px 12px;font-size:12px;display:flex;align-items:center;gap:6px;color:var(--text2)}
+.media-item .del-media{cursor:pointer;color:var(--red);font-size:14px;margin-left:4px}
+.media-item .del-media:hover{color:#fff}
+.media-icon{font-size:14px}
+.upload-area{border:2px dashed var(--border);border-radius:8px;padding:16px;text-align:center;cursor:pointer;transition:all .2s;color:var(--text2);font-size:13px}
+.upload-area:hover{border-color:var(--accent);color:var(--accent)}
+.upload-area.dragover{border-color:var(--green);background:var(--green)11}
+.upload-area input{display:none}
 
 /* Empty state */
 .empty{text-align:center;padding:60px 20px;color:var(--text2)}
 .empty-icon{font-size:48px;margin-bottom:12px}
 
-/* Toast */
-.toast{position:fixed;bottom:24px;right:24px;padding:14px 24px;border-radius:10px;font-size:14px;z-index:999;animation:slideIn .3s ease}
-.toast-success{background:var(--green);color:#fff}
-.toast-error{background:var(--red);color:#fff}
-@keyframes slideIn{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+/* Novel text preview */
+.text-preview{color:var(--text2);font-size:13px;line-height:1.6;max-height:60px;overflow:hidden;margin-bottom:8px}
 
-/* Spinner */
-.spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}
-
-/* Modal */
-.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;align-items:center;justify-content:center}
-.modal-overlay.show{display:flex}
-.modal{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:32px;width:90%;max-width:600px;max-height:80vh;overflow-y:auto}
-.modal h3{margin-bottom:20px}
+/* Upload novel section */
+.upload-novel{margin-bottom:24px;display:flex;gap:12px;align-items:center}
+.upload-novel input[type=file]{display:none}
 
 /* Responsive */
-@media(max-width:640px){.container{padding:12px}.info-grid{grid-template-columns:1fr}}
+@media(max-width:640px){.container{padding:12px}.card{padding:14px}.login-box{width:95%;padding:28px}}
 </style>
 </head>
 <body>
 
-<!-- Login Screen -->
+<!-- Toast container -->
+<div id="toastContainer"></div>
+
+<header>
+  <h1>🎬 <span>AI YouTube</span> Novel Factory</h1>
+  <div class="header-right">
+    <div id="statusDot"></div>
+    <span id="statusText">กำลังเชื่อมต่อ…</span>
+    <button class="btn btn-sm btn-outline" id="logoutBtn" style="display:none" onclick="logout()">ออกจากระบบ</button>
+  </div>
+</header>
+
+<!-- Login screen -->
 <div id="loginScreen">
   <div class="login-box">
-    <h2>AI YouTube Novel Factory</h2>
-    <p style="color:var(--text2);margin-bottom:24px;font-size:14px">ใส่ API Key เพื่อเข้าสู่ระบบ</p>
-    <input type="password" id="apiKeyInput" placeholder="API Secret Key" autofocus>
-    <button class="btn btn-primary" style="width:100%" onclick="login()">เข้าสู่ระบบ</button>
+    <h2>🔐 เข้าสู่ระบบ</h2>
+    <p>กรอกชื่อผู้ใช้และรหัสผ่านเพื่อเข้าใช้งาน</p>
+    <div class="login-error" id="loginError"></div>
+    <input type="text" id="loginUser" placeholder="ชื่อผู้ใช้" autocomplete="username">
+    <input type="password" id="loginPass" placeholder="รหัสผ่าน" autocomplete="current-password">
+    <button class="btn btn-primary" style="width:100%" id="loginBtn" onclick="doLogin()">
+      <span class="spinner"></span> เข้าสู่ระบบ
+    </button>
   </div>
 </div>
 
-<!-- Main App -->
-<div id="mainApp" style="display:none">
-  <header>
-    <h1>AI <span>YouTube</span> Novel Factory</h1>
-    <div class="header-right">
-      <div id="statusDot"></div>
-      <span id="statusText">Connecting...</span>
-      <button class="btn btn-sm btn-danger" onclick="logout()">ออกจากระบบ</button>
-    </div>
-  </header>
-
+<!-- Main app (hidden until logged in) -->
+<div id="appMain" style="display:none">
   <div class="container">
-    <!-- Tabs -->
     <div class="tabs">
-      <div class="tab active" data-tab="novels">นิยาย</div>
-      <div class="tab" data-tab="media">สื่อ (รูป/วิดีโอ)</div>
-      <div class="tab" data-tab="jobs">งาน</div>
-      <div class="tab" data-tab="videos">วิดีโอที่สร้าง</div>
+      <div class="tab active" data-tab="novels">📚 นิยาย</div>
+      <div class="tab" data-tab="jobs">⚙️ งาน</div>
+      <div class="tab" data-tab="videos">🎬 วิดีโอ</div>
     </div>
 
     <!-- Novels Tab -->
     <div class="tab-content active" id="tab-novels">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
-        <h2 style="font-size:18px">รายการนิยาย</h2>
-        <label class="btn btn-primary" style="cursor:pointer">
-          &#128194; อัปโหลดไฟล์ .txt
-          <input type="file" id="novelFileInput" accept=".txt,.text" multiple style="display:none" onchange="uploadNovelFiles(this.files)">
-        </label>
+      <div class="upload-novel">
+        <button class="btn btn-primary" onclick="document.getElementById('novelFileInput').click()">
+          📁 อัปโหลดนิยาย (.txt)
+        </button>
+        <input type="file" id="novelFileInput" accept=".txt,.text" onchange="uploadNovel(this)">
+        <button class="btn btn-outline" onclick="loadNovels()">🔄 รีเฟรช</button>
       </div>
-      <div id="novelUploadStatus" style="margin-bottom:12px"></div>
-      <div id="novelsList"></div>
-    </div>
-
-    <!-- Media Tab -->
-    <div class="tab-content" id="tab-media">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
-        <h2 style="font-size:18px">รูปภาพ / วิดีโอ สำหรับ Render</h2>
-        <label class="btn btn-primary" style="cursor:pointer">
-          &#128247; อัปโหลดสื่อ
-          <input type="file" id="mediaFileInput" accept=".jpg,.jpeg,.png,.webp,.bmp,.mp4,.mov,.avi,.mkv,.webm" multiple style="display:none" onchange="uploadMediaFiles(this.files)">
-        </label>
-      </div>
-      <p style="color:var(--text2);font-size:13px;margin-bottom:16px">
-        อัปโหลดรูปภาพ (.jpg, .png, .webp) และวิดีโอ (.mp4, .mov) ที่ต้องการให้โปรแกรม render รวมกับเสียง
-        — ไฟล์จะถูกสลับกัน (รูป, วิดีโอ, รูป, วิดีโอ) ในแต่ละ scene
-      </p>
-      <div id="mediaUploadStatus" style="margin-bottom:12px"></div>
-      <div id="mediaList"></div>
+      <div id="novelList"></div>
     </div>
 
     <!-- Jobs Tab -->
     <div class="tab-content" id="tab-jobs">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
-        <h2 style="font-size:18px">สถานะงาน</h2>
-        <button class="btn btn-sm btn-primary" onclick="loadJobs()">รีเฟรช</button>
+      <div style="margin-bottom:16px">
+        <button class="btn btn-outline" onclick="loadJobs()">🔄 รีเฟรช</button>
       </div>
-      <div id="jobsList"></div>
+      <div id="jobList"></div>
     </div>
 
     <!-- Videos Tab -->
     <div class="tab-content" id="tab-videos">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
-        <h2 style="font-size:18px">วิดีโอที่สร้าง</h2>
-        <button class="btn btn-sm btn-primary" onclick="loadVideos()">รีเฟรช</button>
+      <div style="margin-bottom:16px">
+        <button class="btn btn-outline" onclick="loadVideos()">🔄 รีเฟรช</button>
       </div>
-      <div id="videosList"></div>
+      <div id="videoList"></div>
     </div>
   </div>
 </div>
 
 <script>
-const API_BASE = window.location.origin + '/api/v1';
-let API_KEY = '';
+const API = '/api/v1';
+let TOKEN = sessionStorage.getItem('token') || '';
 
-// ── Auth ──
-function login() {
-  API_KEY = document.getElementById('apiKeyInput').value.trim();
-  if (!API_KEY) return;
-  sessionStorage.setItem('apiKey', API_KEY);
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+function toast(msg, type='info') {
+  const el = document.createElement('div');
+  el.className = 'toast toast-' + type;
+  el.textContent = msg;
+  document.getElementById('toastContainer').appendChild(el);
+  setTimeout(() => el.remove(), 4000);
+}
+
+function hdr() {
+  return { 'Authorization': 'Bearer ' + TOKEN, 'Content-Type': 'application/json' };
+}
+
+function hdrFile() {
+  return { 'Authorization': 'Bearer ' + TOKEN };
+}
+
+async function api(path, opts = {}) {
+  const res = await fetch(API + path, { headers: hdr(), ...opts });
+  if (res.status === 401) { logout(); throw new Error('Unauthorized'); }
+  if (res.status === 204) return null;
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || res.statusText);
+  }
+  return res.json();
+}
+
+function badgeClass(s) {
+  if (!s) return 'badge-draft';
+  const st = s.toLowerCase();
+  if (st === 'completed' || st === 'done') return 'badge-completed';
+  if (st === 'failed' || st === 'error') return 'badge-failed';
+  if (st === 'running' || st === 'processing') return 'badge-running';
+  if (st === 'pending' || st === 'queued') return 'badge-pending';
+  return 'badge-draft';
+}
+
+function fmtDate(d) {
+  if (!d) return '-';
+  return new Date(d).toLocaleString('th-TH', {dateStyle:'short', timeStyle:'short'});
+}
+
+function fmtSize(b) {
+  if (b < 1024) return b + ' B';
+  if (b < 1048576) return (b/1024).toFixed(1) + ' KB';
+  return (b/1048576).toFixed(1) + ' MB';
+}
+
+function setLoading(btn, loading) {
+  if (loading) btn.classList.add('loading');
+  else btn.classList.remove('loading');
+}
+
+// ── Auth ─────────────────────────────────────────────────────────────────────
+
+async function doLogin() {
+  const user = document.getElementById('loginUser').value.trim();
+  const pass = document.getElementById('loginPass').value;
+  const errEl = document.getElementById('loginError');
+  const btn = document.getElementById('loginBtn');
+
+  if (!user || !pass) { errEl.textContent = 'กรุณากรอกให้ครบ'; errEl.style.display = 'block'; return; }
+
+  setLoading(btn, true);
+  errEl.style.display = 'none';
+
+  try {
+    const res = await fetch(API + '/auth/login', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({username: user, password: pass})
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || 'Login failed');
+    }
+    const data = await res.json();
+    TOKEN = data.token;
+    sessionStorage.setItem('token', TOKEN);
+    showApp();
+    toast('เข้าสู่ระบบสำเร็จ!', 'success');
+  } catch (e) {
+    errEl.textContent = e.message;
+    errEl.style.display = 'block';
+  } finally {
+    setLoading(btn, false);
+  }
+}
+
+function logout() {
+  TOKEN = '';
+  sessionStorage.removeItem('token');
+  document.getElementById('appMain').style.display = 'none';
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('logoutBtn').style.display = 'none';
+}
+
+function showApp() {
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('appMain').style.display = 'block';
+  document.getElementById('logoutBtn').style.display = '';
+  loadNovels();
   checkHealth();
 }
-function logout() {
-  API_KEY = '';
-  sessionStorage.removeItem('apiKey');
-  document.getElementById('mainApp').style.display = 'none';
-  document.getElementById('loginScreen').style.display = 'flex';
-  document.getElementById('apiKeyInput').value = '';
-}
-(function() {
-  const saved = sessionStorage.getItem('apiKey');
-  if (saved) { API_KEY = saved; checkHealth(); }
-})();
 
-// ── API Helpers ──
-async function api(path, method = 'GET', body = null) {
-  const opts = {
-    method,
-    headers: { 'Authorization': 'Bearer ' + API_KEY, 'Content-Type': 'application/json' }
-  };
-  if (body) opts.body = JSON.stringify(body);
-  const res = await fetch(API_BASE + path, opts);
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ detail: res.statusText }));
-    if (res.status === 401) {
-      // Stale key in sessionStorage — force re-login
-      sessionStorage.removeItem('apiKey');
-      API_KEY = '';
-      document.getElementById('mainApp').style.display = 'none';
-      document.getElementById('loginScreen').style.display = 'flex';
-    }
-    throw new Error(err.detail || res.statusText);
-  }
-  if (res.status === 204) return null;
-  return res.json();
-}
+// ── Health ────────────────────────────────────────────────────────────────────
 
-async function apiUpload(path, formData) {
-  const res = await fetch(API_BASE + path, {
-    method: 'POST',
-    headers: { 'Authorization': 'Bearer ' + API_KEY },
-    body: formData
-  });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ detail: res.statusText }));
-    throw new Error(err.detail || res.statusText);
-  }
-  return res.json();
-}
-
-// ── Health Check ──
 async function checkHealth() {
   try {
-    const data = await fetch(API_BASE + '/health').then(r => r.json());
-    document.getElementById('statusDot').className = 'ok';
-    document.getElementById('statusText').textContent =
-      data.database + ' | ' + data.tts_engine + ' | ' + data.image_engine;
-    document.getElementById('loginScreen').style.display = 'none';
-    document.getElementById('mainApp').style.display = 'block';
+    const r = await fetch(API + '/health');
+    const d = await r.json();
+    document.getElementById('statusDot').className = d.status === 'healthy' ? 'ok' : '';
+    document.getElementById('statusText').textContent = d.status === 'healthy' ? 'เชื่อมต่อแล้ว' : 'มีปัญหา';
+  } catch {
+    document.getElementById('statusDot').className = '';
+    document.getElementById('statusText').textContent = 'ไม่สามารถเชื่อมต่อ';
+  }
+}
+
+// ── Novels ────────────────────────────────────────────────────────────────────
+
+async function loadNovels() {
+  const el = document.getElementById('novelList');
+  el.innerHTML = '<div class="empty">กำลังโหลด…</div>';
+  try {
+    const novels = await api('/novels?limit=100');
+    if (!novels.length) { el.innerHTML = '<div class="empty"><div class="empty-icon">📚</div>ยังไม่มีนิยาย — อัปโหลดไฟล์ .txt เพื่อเริ่มต้น</div>'; return; }
+    el.innerHTML = novels.map(n => novelCard(n)).join('');
+    // Load media for each novel
+    novels.forEach(n => loadNovelMedia(n.id));
+  } catch (e) {
+    el.innerHTML = '<div class="empty" style="color:var(--red)">โหลดไม่สำเร็จ: ' + e.message + '</div>';
+  }
+}
+
+function novelCard(n) {
+  const preview = n.text ? n.text.substring(0, 120) + '…' : '';
+  return `
+  <div class="card" id="novel-${n.id}">
+    <div class="card-header">
+      <div>
+        <div class="card-title">${esc(n.title)}</div>
+        <div class="card-meta">โดย ${esc(n.author)} · ${fmtDate(n.created_at)}</div>
+      </div>
+      <div class="card-actions">
+        <span class="badge ${badgeClass(n.status)}">${esc(n.status || 'draft')}</span>
+      </div>
+    </div>
+    ${preview ? '<div class="text-preview">' + esc(preview) + '</div>' : ''}
+    <div class="card-actions" style="margin-bottom:4px">
+      <button class="btn btn-sm btn-success" id="proc-${n.id}" onclick="processNovel('${n.id}', this)">
+        <span class="spinner"></span> ▶ สร้างวิดีโอ
+      </button>
+      <button class="btn btn-sm btn-danger" onclick="deleteNovel('${n.id}', this)">
+        <span class="spinner"></span> 🗑 ลบ
+      </button>
+    </div>
+    <!-- Per-novel media section -->
+    <div class="media-section">
+      <h4>🖼 สื่อประกอบ <span id="media-count-${n.id}" style="color:var(--accent)"></span></h4>
+      <div class="media-grid" id="media-grid-${n.id}"></div>
+      <div class="upload-area" id="upload-area-${n.id}"
+           ondragover="event.preventDefault();this.classList.add('dragover')"
+           ondragleave="this.classList.remove('dragover')"
+           ondrop="handleDrop(event,'${n.id}')"
+           onclick="document.getElementById('media-input-${n.id}').click()">
+        📁 คลิกหรือลากไฟล์มาวาง (รูปภาพ / วิดีโอ)
+        <input type="file" id="media-input-${n.id}" multiple accept="image/*,video/*" onchange="uploadMedia('${n.id}', this.files)">
+      </div>
+    </div>
+  </div>`;
+}
+
+function esc(s) { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
+
+async function uploadNovel(input) {
+  if (!input.files.length) return;
+  const file = input.files[0];
+  const fd = new FormData();
+  fd.append('file', file);
+
+  toast('กำลังอัปโหลด "' + file.name + '"…', 'info');
+  try {
+    const res = await fetch(API + '/novels/upload', { method: 'POST', headers: hdrFile(), body: fd });
+    if (res.status === 401) { logout(); return; }
+    if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.detail || 'Upload failed'); }
+    toast('อัปโหลดนิยายสำเร็จ!', 'success');
     loadNovels();
   } catch (e) {
-    toast('API connection failed: ' + e.message, 'error');
+    toast('อัปโหลดไม่สำเร็จ: ' + e.message, 'error');
   }
+  input.value = '';
 }
 
-// ── Tabs ──
-document.querySelectorAll('.tab').forEach(tab => {
-  tab.addEventListener('click', () => {
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-    tab.classList.add('active');
-    document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
-    if (tab.dataset.tab === 'novels') loadNovels();
-    if (tab.dataset.tab === 'media') loadMedia();
-    if (tab.dataset.tab === 'jobs') loadJobs();
-    if (tab.dataset.tab === 'videos') loadVideos();
-  });
-});
-
-// ── Novel Upload ──
-async function uploadNovelFiles(files) {
-  const status = document.getElementById('novelUploadStatus');
-  if (!files.length) return;
-  status.innerHTML = '<span class="spinner"></span> กำลังอัปโหลด ' + files.length + ' ไฟล์...';
-  let ok = 0, fail = 0;
-  for (const f of files) {
-    try {
-      const fd = new FormData();
-      fd.append('file', f);
-      await apiUpload('/novels/upload', fd);
-      ok++;
-    } catch (e) {
-      fail++;
-      toast(f.name + ': ' + e.message, 'error');
-    }
-  }
-  status.innerHTML = '';
-  if (ok) toast('อัปโหลดสำเร็จ ' + ok + ' ไฟล์');
-  document.getElementById('novelFileInput').value = '';
-  loadNovels();
-}
-
-// ── Novels ──
-async function loadNovels() {
-  const el = document.getElementById('novelsList');
+async function deleteNovel(id, btn) {
+  if (!confirm('ต้องการลบนิยายนี้?')) return;
+  setLoading(btn, true);
   try {
-    const novels = await api('/novels');
-    if (!novels.length) {
-      el.innerHTML = '<div class="empty"><div class="empty-icon">&#128214;</div>ยังไม่มีนิยาย — อัปโหลดไฟล์ .txt เพื่อเริ่มต้น</div>';
-      return;
-    }
-    el.innerHTML = novels.map(n => `
-      <div class="card">
-        <div class="card-header">
-          <span class="card-title">${esc(n.title)}</span>
-          <div class="card-actions">
-            <span class="badge badge-${n.status}">${n.status}</span>
-          </div>
-        </div>
-        <div style="font-size:13px;color:var(--text2);margin-bottom:12px">
-          โดย ${esc(n.author)} &middot; ${timeAgo(n.created_at)}
-        </div>
-        <div style="display:flex;gap:8px">
-          <button class="btn btn-sm btn-success" onclick="triggerPipeline('${n.id}')">&#9654; สร้างวิดีโอ</button>
-          <button class="btn btn-sm btn-danger" onclick="deleteNovel('${n.id}','${esc(n.title)}')">&#128465; ลบ</button>
-        </div>
+    await api('/novels/' + id, { method: 'DELETE' });
+    toast('ลบนิยายสำเร็จ', 'success');
+    const card = document.getElementById('novel-' + id);
+    if (card) card.remove();
+  } catch (e) {
+    toast('ลบไม่สำเร็จ: ' + e.message, 'error');
+  } finally {
+    setLoading(btn, false);
+  }
+}
+
+async function processNovel(id, btn) {
+  setLoading(btn, true);
+  try {
+    const data = await api('/novels/' + id + '/process', { method: 'POST' });
+    toast('เริ่มสร้างวิดีโอ: ' + data.message, 'success');
+    // Switch to jobs tab
+    switchTab('jobs');
+    loadJobs();
+  } catch (e) {
+    toast('สร้างวิดีโอไม่สำเร็จ: ' + e.message, 'error');
+  } finally {
+    setLoading(btn, false);
+  }
+}
+
+// ── Per-Novel Media ──────────────────────────────────────────────────────────
+
+async function loadNovelMedia(novelId) {
+  const grid = document.getElementById('media-grid-' + novelId);
+  const countEl = document.getElementById('media-count-' + novelId);
+  if (!grid) return;
+
+  try {
+    const data = await api('/novels/' + novelId + '/media');
+    countEl.textContent = data.count > 0 ? '(' + data.count + ' ไฟล์)' : '';
+    if (!data.files.length) { grid.innerHTML = '<span style="color:var(--text2);font-size:12px">ยังไม่มีสื่อ</span>'; return; }
+    grid.innerHTML = data.files.map(f => `
+      <div class="media-item">
+        <span class="media-icon">${f.type === 'video' ? '🎬' : '🖼'}</span>
+        ${esc(f.name)} <span style="opacity:.5">(${fmtSize(f.size)})</span>
+        <span class="del-media" title="ลบ" onclick="deleteMedia('${novelId}','${esc(f.name)}',this)">✕</span>
       </div>
     `).join('');
-  } catch (e) { el.innerHTML = '<div class="empty">Error: ' + esc(e.message) + '</div>'; }
+  } catch {
+    grid.innerHTML = '';
+  }
 }
 
-async function deleteNovel(id, title) {
-  if (!confirm('ลบนิยาย "' + title + '" ?')) return;
-  try { await api('/novels/' + id, 'DELETE'); toast('ลบสำเร็จ'); loadNovels(); }
-  catch (e) { toast(e.message, 'error'); }
-}
-
-async function triggerPipeline(novelId) {
-  try {
-    const res = await api('/novels/' + novelId + '/process', 'POST');
-    toast(res.message + ' (Job: ' + res.job_id.slice(0,8) + '...)');
-  } catch (e) { toast(e.message, 'error'); }
-}
-
-// ── Media Upload ──
-async function uploadMediaFiles(files) {
-  const status = document.getElementById('mediaUploadStatus');
+async function uploadMedia(novelId, files) {
   if (!files.length) return;
-  status.innerHTML = '<span class="spinner"></span> กำลังอัปโหลด ' + files.length + ' ไฟล์...';
+  const fd = new FormData();
+  for (const f of files) fd.append('files', f);
+
+  const area = document.getElementById('upload-area-' + novelId);
+  const origText = area.textContent;
+  area.textContent = '⏳ กำลังอัปโหลด ' + files.length + ' ไฟล์…';
+
   try {
-    const fd = new FormData();
-    for (const f of files) fd.append('files', f);
-    const res = await apiUpload('/novels/media/upload', fd);
-    toast('อัปโหลดสำเร็จ ' + res.count + ' ไฟล์');
-  } catch (e) { toast(e.message, 'error'); }
-  status.innerHTML = '';
-  document.getElementById('mediaFileInput').value = '';
-  loadMedia();
+    const res = await fetch(API + '/novels/' + novelId + '/media/upload', {
+      method: 'POST', headers: hdrFile(), body: fd
+    });
+    if (res.status === 401) { logout(); return; }
+    if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.detail || 'Upload failed'); }
+    const data = await res.json();
+    toast('อัปโหลดสื่อสำเร็จ ' + data.count + ' ไฟล์', 'success');
+    loadNovelMedia(novelId);
+  } catch (e) {
+    toast('อัปโหลดสื่อไม่สำเร็จ: ' + e.message, 'error');
+  }
+  // Restore area
+  area.innerHTML = '📁 คลิกหรือลากไฟล์มาวาง (รูปภาพ / วิดีโอ)<input type="file" id="media-input-' + novelId + '" multiple accept="image/*,video/*" onchange="uploadMedia(\'' + novelId + '\', this.files)">';
 }
 
-async function loadMedia() {
-  const el = document.getElementById('mediaList');
-  try {
-    const data = await api('/novels/media/list');
-    if (!data.files.length) {
-      el.innerHTML = '<div class="empty"><div class="empty-icon">&#128247;</div>ยังไม่มีสื่อ — อัปโหลดรูปภาพหรือวิดีโอ</div>';
-      return;
-    }
-    el.innerHTML = '<div class="card"><div class="card-header"><span class="card-title">ไฟล์สื่อ (' + data.count + ' ไฟล์)</span></div>' +
-      data.files.map(f => {
-        const isVideo = /\.(mp4|mov|avi|mkv|webm)$/i.test(f);
-        const icon = isVideo ? '&#127909;' : '&#128444;';
-        const typeLabel = isVideo ? 'วิดีโอ' : 'รูปภาพ';
-        return `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)">
-          <span>${icon} ${esc(f)} <span style="color:var(--text2);font-size:12px">(${typeLabel})</span></span>
-          <button class="btn btn-sm btn-danger" onclick="deleteMedia('${esc(f)}')">&#128465;</button>
-        </div>`;
-      }).join('') + '</div>';
-  } catch (e) { el.innerHTML = '<div class="empty">Error: ' + esc(e.message) + '</div>'; }
+function handleDrop(e, novelId) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('dragover');
+  if (e.dataTransfer.files.length) uploadMedia(novelId, e.dataTransfer.files);
 }
 
-async function deleteMedia(filename) {
-  if (!confirm('ลบไฟล์ "' + filename + '" ?')) return;
+async function deleteMedia(novelId, filename, el) {
+  el.textContent = '…';
   try {
-    await api('/novels/media/' + encodeURIComponent(filename), 'DELETE');
-    toast('ลบสำเร็จ');
-    loadMedia();
-  } catch (e) { toast(e.message, 'error'); }
+    await api('/novels/' + novelId + '/media/' + encodeURIComponent(filename), { method: 'DELETE' });
+    toast('ลบสื่อสำเร็จ', 'success');
+    loadNovelMedia(novelId);
+  } catch (e) {
+    toast('ลบสื่อไม่สำเร็จ: ' + e.message, 'error');
+    el.textContent = '✕';
+  }
 }
 
-// ── Jobs ──
+// ── Jobs ──────────────────────────────────────────────────────────────────────
+
 async function loadJobs() {
-  const el = document.getElementById('jobsList');
+  const el = document.getElementById('jobList');
+  el.innerHTML = '<div class="empty">กำลังโหลด…</div>';
   try {
-    const jobs = await api('/jobs');
-    if (!jobs.length) {
-      el.innerHTML = '<div class="empty"><div class="empty-icon">&#128736;</div>ยังไม่มีงาน</div>';
-      return;
-    }
+    const jobs = await api('/jobs?limit=50');
+    if (!jobs.length) { el.innerHTML = '<div class="empty"><div class="empty-icon">⚙️</div>ยังไม่มีงาน</div>'; return; }
     el.innerHTML = jobs.map(j => `
       <div class="card">
         <div class="card-header">
-          <span class="card-title">${j.job_type}</span>
-          <span class="badge badge-${j.status}">${j.status}</span>
+          <div>
+            <div class="card-title">งาน ${j.id.substring(0,8)}…</div>
+            <div class="card-meta">${fmtDate(j.created_at)}</div>
+          </div>
+          <span class="badge ${badgeClass(j.status)}">${esc(j.status)}</span>
         </div>
-        <div class="info-grid">
-          <div class="info-item"><div class="info-label">Job ID</div><div class="info-value" style="font-size:12px">${j.job_id}</div></div>
-          <div class="info-item"><div class="info-label">สร้างเมื่อ</div><div class="info-value">${timeAgo(j.created_at)}</div></div>
-          ${j.started_at ? '<div class="info-item"><div class="info-label">เริ่ม</div><div class="info-value">' + timeAgo(j.started_at) + '</div></div>' : ''}
-          ${j.finished_at ? '<div class="info-item"><div class="info-label">เสร็จ</div><div class="info-value">' + timeAgo(j.finished_at) + '</div></div>' : ''}
-          ${j.error_message ? '<div class="info-item" style="grid-column:1/-1"><div class="info-label">Error</div><div class="info-value" style="color:var(--red)">' + esc(j.error_message) + '</div></div>' : ''}
-        </div>
+        ${j.error ? '<div style="color:var(--red);font-size:13px;margin-top:8px">❌ ' + esc(j.error) + '</div>' : ''}
+        ${j.progress != null ? '<div style="margin-top:8px"><div style="background:var(--surface2);border-radius:4px;height:6px;overflow:hidden"><div style="background:var(--accent);height:100%;width:' + (j.progress||0) + '%;transition:width .3s"></div></div><div style="font-size:11px;color:var(--text2);margin-top:4px">' + (j.progress||0) + '%</div></div>' : ''}
       </div>
     `).join('');
-  } catch (e) { el.innerHTML = '<div class="empty">Error: ' + esc(e.message) + '</div>'; }
+  } catch (e) {
+    el.innerHTML = '<div class="empty" style="color:var(--red)">โหลดไม่สำเร็จ: ' + e.message + '</div>';
+  }
 }
 
-// ── Videos ──
+// ── Videos ────────────────────────────────────────────────────────────────────
+
 async function loadVideos() {
-  const el = document.getElementById('videosList');
+  const el = document.getElementById('videoList');
+  el.innerHTML = '<div class="empty">กำลังโหลด…</div>';
   try {
-    const videos = await api('/videos');
-    if (!videos.length) {
-      el.innerHTML = '<div class="empty"><div class="empty-icon">&#127916;</div>ยังไม่มีวิดีโอ</div>';
-      return;
-    }
-    el.innerHTML = videos.map(v => `
+    const vids = await api('/videos?limit=50');
+    if (!vids.length) { el.innerHTML = '<div class="empty"><div class="empty-icon">🎬</div>ยังไม่มีวิดีโอ — สร้างจากแท็บนิยาย</div>'; return; }
+    el.innerHTML = vids.map(v => `
       <div class="card">
         <div class="card-header">
-          <span class="card-title">Part ${v.part_number}</span>
-          <span class="badge badge-${v.status}">${v.status}</span>
-        </div>
-        <div class="info-grid">
-          <div class="info-item"><div class="info-label">Video ID</div><div class="info-value" style="font-size:12px">${v.id}</div></div>
-          ${v.video_path ? '<div class="info-item"><div class="info-label">ไฟล์</div><div class="info-value" style="font-size:12px;word-break:break-all">' + esc(v.video_path) + '</div></div>' : ''}
-          ${v.youtube_url ? '<div class="info-item"><div class="info-label">YouTube</div><div class="info-value"><a href="' + esc(v.youtube_url) + '" target="_blank">&#128279; ดูบน YouTube</a></div></div>' : ''}
-          <div class="info-item"><div class="info-label">สร้างเมื่อ</div><div class="info-value">${timeAgo(v.created_at)}</div></div>
+          <div>
+            <div class="card-title">${esc(v.title || 'วิดีโอ')}</div>
+            <div class="card-meta">${fmtDate(v.created_at)} · ${v.file_path || ''}</div>
+          </div>
+          <span class="badge ${badgeClass(v.status)}">${esc(v.status || 'ready')}</span>
         </div>
       </div>
     `).join('');
-  } catch (e) { el.innerHTML = '<div class="empty">Error: ' + esc(e.message) + '</div>'; }
+  } catch (e) {
+    el.innerHTML = '<div class="empty" style="color:var(--red)">โหลดไม่สำเร็จ: ' + e.message + '</div>';
+  }
 }
 
-// ── Helpers ──
-function esc(str) {
-  const d = document.createElement('div');
-  d.textContent = str || '';
-  return d.innerHTML;
-}
-function timeAgo(iso) {
-  if (!iso) return '-';
-  const d = new Date(iso);
-  const now = new Date();
-  const s = Math.floor((now - d) / 1000);
-  if (s < 60) return s + ' วินาทีที่แล้ว';
-  if (s < 3600) return Math.floor(s / 60) + ' นาทีที่แล้ว';
-  if (s < 86400) return Math.floor(s / 3600) + ' ชั่วโมงที่แล้ว';
-  return d.toLocaleDateString('th-TH') + ' ' + d.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
-}
-function toast(msg, type = 'success') {
-  const t = document.createElement('div');
-  t.className = 'toast toast-' + type;
-  t.textContent = msg;
-  document.body.appendChild(t);
-  setTimeout(() => t.remove(), 4000);
+// ── Tabs ──────────────────────────────────────────────────────────────────────
+
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.toggle('active', t.id === 'tab-' + name));
+  if (name === 'jobs') loadJobs();
+  if (name === 'videos') loadVideos();
+  if (name === 'novels') loadNovels();
 }
 
-// Auto-refresh jobs every 10s
-setInterval(() => {
-  if (document.querySelector('.tab.active')?.dataset.tab === 'jobs') loadJobs();
-}, 10000);
+document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => switchTab(t.dataset.tab)));
 
-document.getElementById('apiKeyInput').addEventListener('keydown', e => {
-  if (e.key === 'Enter') login();
-});
+// Enter key on login
+document.getElementById('loginPass').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+document.getElementById('loginUser').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('loginPass').focus(); });
+
+// ── Init ─────────────────────────────────────────────────────────────────────
+
+if (TOKEN) showApp();
+else checkHealth();
 </script>
 </body>
 </html>
