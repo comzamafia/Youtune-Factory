@@ -34,19 +34,6 @@ def list_videos(
     return videos
 
 
-@router.get("/{video_id}", response_model=VideoResponse)
-def get_video(
-    video_id: uuid.UUID,
-    db: Session = Depends(get_db),
-    _token: str = Depends(verify_token),
-):
-    """Get a single video's details."""
-    video = db.query(Video).filter(Video.id == video_id).first()
-    if not video:
-        raise HTTPException(status_code=404, detail="Video not found")
-    return video
-
-
 @router.get("/{video_id}/download")
 def download_video(
     video_id: uuid.UUID,
@@ -67,3 +54,16 @@ def download_video(
         media_type="video/mp4",
         filename=p.name,
     )
+
+
+@router.get("/{video_id}", response_model=VideoResponse)
+def get_video(
+    video_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    _token: str = Depends(verify_token),
+):
+    """Get a single video's details."""
+    video = db.query(Video).filter(Video.id == video_id).first()
+    if not video:
+        raise HTTPException(status_code=404, detail="Video not found")
+    return video
