@@ -475,11 +475,11 @@ async function loadJobs() {
       <div class="card">
         <div class="card-header">
           <div>
-            <div class="card-title">${esc(j.job_type || 'งาน')} · ${j.job_id.substring(0,8)}…</div>
+            <div class="card-title">${jobLabel(j.job_type)}</div>
             <div class="card-meta">${fmtDate(j.created_at)}${j.started_at ? ' → เริ่ม ' + fmtDate(j.started_at) : ''}${j.finished_at ? ' → เสร็จ ' + fmtDate(j.finished_at) : ''}</div>
           </div>
           <div style="display:flex;align-items:center;gap:8px">
-            <span class="badge ${badgeClass(j.status)}">${esc(j.status)}</span>
+            <span class="badge ${badgeClass(j.status)}">${statusLabel(j.status)}</span>
             <button class="btn btn-sm btn-danger" onclick="deleteJob('${j.job_id}',this)" title="ลบ">✕</button>
           </div>
         </div>
@@ -490,6 +490,24 @@ async function loadJobs() {
     el.innerHTML = '<div class="empty" style="color:var(--red)">โหลดไม่สำเร็จ: ' + e.message + '</div>';
   }
 }
+
+const _jobLabels = {
+  full_pipeline: '🔄 ประมวลผลทั้งหมด',
+  generate_script: '📝 สร้างบทจากนิยาย',
+  generate_voice: '🔊 สร้างเสียงพากย์',
+  generate_image: '🖼 สร้างภาพประกอบ',
+  render_video: '🎬 ตัดต่อวิดีโอ',
+  generate_thumbnail: '🖼 สร้างรูปปก',
+  upload_youtube: '📤 อัปโหลด YouTube',
+  generate_subtitle: '📝 สร้างซับไตเติ้ล',
+};
+function jobLabel(t) { return _jobLabels[t] || t; }
+
+const _statusLabels = {
+  queued: 'รอคิว', running: 'กำลังทำงาน', completed: 'เสร็จแล้ว',
+  failed: 'ล้มเหลว', pending: 'รอดำเนินการ',
+};
+function statusLabel(s) { return _statusLabels[s] || s; }
 
 // ── Videos ────────────────────────────────────────────────────────────────────
 
