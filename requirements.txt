@@ -1,47 +1,48 @@
 # ── Core Framework ──
-fastapi==0.115.6
-uvicorn[standard]==0.34.0
-pydantic==2.10.4
-pydantic-settings==2.7.1
-python-dotenv==1.0.1
+# Updated: 2026-03-06 (busts Railway pip cache)
+fastapi>=0.115.0
+uvicorn[standard]>=0.30.0
+pydantic>=2.9.0
+pydantic-settings>=2.6.0
+python-dotenv>=1.0.0
 
 # ── Database ──
-sqlalchemy==2.0.36
-psycopg2-binary==2.9.10
-alembic==1.14.1
+sqlalchemy>=2.0.0
+psycopg2-binary>=2.9.0
+alembic>=1.13.0
 
 # ── Job Queue ──
-celery[redis]==5.4.0
-redis==5.2.1
+celery[redis]>=5.4.0
+redis>=5.0.0
 
 # ── AI / LLM ──
-openai==1.58.1
-httpx==0.28.1
+openai>=1.50.0
+httpx>=0.27.0
 
 # ── TTS ──
-# TTS (Coqui) removed — discontinued on PyPI; use edge_tts (free) or elevenlabs
-elevenlabs==1.15.0
-edge-tts==7.0.2
+# edge_tts: free, no API key, works on any platform including Railway
+edge-tts>=7.0.0
+# elevenlabs: optional paid TTS — uncomment if you use ELEVENLABS_API_KEY
+# elevenlabs>=1.15.0
 
 # ── Image Generation ──
-Pillow==11.1.0
+Pillow>=10.0.0
 
-# ── Subtitle ──
-# openai-whisper omitted — heavy dependency, not needed when using text-based subtitles
-mutagen==1.47.0
+# ── Subtitle / Audio ──
+mutagen>=1.47.0
 
 # ── YouTube Upload ──
-google-api-python-client==2.159.0
-google-auth-oauthlib==1.2.1
-google-auth-httplib2==0.2.0
+google-api-python-client>=2.100.0
+google-auth-oauthlib>=1.2.0
+google-auth-httplib2>=0.2.0
 
 # ── Utilities ──
-aiofiles==24.1.0
-python-multipart==0.0.20
+aiofiles>=24.0.0
+python-multipart>=0.0.18
 
 # ── Testing ──
-pytest==8.3.4
-pytest-asyncio==0.25.0
+pytest>=8.0.0
+pytest-asyncio>=0.24.0
 
-# ── Monitoring ──
-flower==2.0.1
+# ── Monitoring (Celery task dashboard) ──
+flower>=2.0.0
