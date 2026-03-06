@@ -67,3 +67,38 @@ def get_video(
     if not video:
         raise HTTPException(status_code=404, detail="Video not found")
     return video
+
+
+@router.delete("/{video_id}", status_code=204)
+def delete_video(
+    video_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    _token: str = Depends(verify_token),
+):
+    """Delete a single video record."""
+    video = db.query(Video).filter(Video.id == video_id).first()
+    if not video:
+        raise HTTPException(status_code=404, detail="Video not found")
+    # Try to remove files from disk
+    for p in [video.video_path, video.subtitle_path, video.thumbnail]:
+        if p:
+            fp = Path(p)
+            fp.unlink(missing_ok=True)
+    db.delete(video)
+    db.commit()
+
+
+@router.delete("", status_code=204)
+def delete_all_videos(
+    db: Session = Depends(get_db),
+    _token: str = Depends(verify_token),
+):
+    """Delete all video records."""
+    videos = db.query(Video).all()
+    for video in videos:
+        for p in [video.video_path, video.subtitle_path, video.thumbnail]:
+            if p:
+                fp = Path(p)
+                fp.unlink(missing_ok=True)
+        db.delete(video)
+    db.commit()

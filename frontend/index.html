@@ -159,8 +159,9 @@ header h1 span{color:var(--accent)}
 
     <!-- Videos Tab -->
     <div class="tab-content" id="tab-videos">
-      <div style="margin-bottom:16px">
+      <div style="margin-bottom:16px;display:flex;gap:8px">
         <button class="btn btn-outline" onclick="loadVideos()">🔄 รีเฟรช</button>
+        <button class="btn" style="background:var(--red);color:#fff" onclick="deleteAllVideos()">🗑 ลบวิดีโอทั้งหมด</button>
       </div>
       <div id="videoList"></div>
     </div>
@@ -557,12 +558,31 @@ async function loadVideos() {
         <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
           ${v.video_path ? '<button class="btn btn-primary" onclick="downloadVideo(\'' + v.id + '\')" style="font-size:0.85rem;padding:6px 14px">⬇️ ดาวน์โหลดวิดีโอ</button>' : ''}
           ${v.youtube_url ? '<a href="' + esc(v.youtube_url) + '" target="_blank" class="btn btn-outline" style="font-size:0.85rem;padding:6px 14px">🔗 YouTube</a>' : ''}
+          <button class="btn" onclick="deleteVideo(\'' + v.id + '\')" style="font-size:0.85rem;padding:6px 14px;background:var(--red);color:#fff">✕ ลบ</button>
         </div>
       </div>
     `).join('');
   } catch (e) {
     el.innerHTML = '<div class="empty" style="color:var(--red)">โหลดไม่สำเร็จ: ' + e.message + '</div>';
   }
+}
+
+async function deleteVideo(videoId) {
+  if (!confirm('ยืนยันลบวิดีโอนี้?')) return;
+  try {
+    await api('/videos/' + videoId, { method: 'DELETE' });
+    toast('ลบวิดีโอเรียบร้อย', 'success');
+    loadVideos();
+  } catch (e) { toast('ลบไม่สำเร็จ: ' + e.message, 'error'); }
+}
+
+async function deleteAllVideos() {
+  if (!confirm('ยืนยันลบวิดีโอทั้งหมด?')) return;
+  try {
+    await api('/videos', { method: 'DELETE' });
+    toast('ลบวิดีโอทั้งหมดเรียบร้อย', 'success');
+    loadVideos();
+  } catch (e) { toast('ลบไม่สำเร็จ: ' + e.message, 'error'); }
 }
 
 async function downloadVideo(videoId) {
