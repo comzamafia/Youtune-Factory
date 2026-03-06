@@ -25,18 +25,19 @@ def _build_ffmpeg_image_cmd(
     if settings.use_gpu:
         cmd.extend(["-hwaccel", settings.ffmpeg_hwaccel])
 
-    # Input: loop image + audio
-    cmd.extend(["-loop", "1", "-i", str(image_path)])
+    # Input: loop image with explicit framerate (required for FFmpeg 7.x)
+    cmd.extend(["-framerate", "25", "-loop", "1", "-i", str(image_path)])
     cmd.extend(["-i", str(audio_path)])
 
     # Video codec
     if settings.use_gpu:
         cmd.extend(["-c:v", settings.ffmpeg_vcodec])
     else:
-        cmd.extend(["-c:v", "libx264", "-preset", "fast"])
+        cmd.extend(["-c:v", "libx264", "-preset", "fast", "-tune", "stillimage"])
 
-    cmd.extend(["-c:a", "aac", "-b:a", "192k"])
+    cmd.extend(["-c:a", "aac", "-b:a", "128k", "-ar", "44100"])
     cmd.extend(["-pix_fmt", "yuv420p"])
+    cmd.extend(["-r", "25"])
 
     # Scale and pad to configured output dimensions (default 1080×1920 = 9:16 vertical)
     vf = (
