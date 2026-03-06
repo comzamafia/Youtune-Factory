@@ -554,11 +554,40 @@ async function loadVideos() {
           </div>
           <span class="badge ${badgeClass(v.status)}">${esc(v.status || 'ready')}</span>
         </div>
-        ${v.youtube_url ? '<div style="margin-top:8px"><a href="' + esc(v.youtube_url) + '" target="_blank">🔗 YouTube</a></div>' : ''}
+        <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
+          ${v.video_path ? '<button class="btn btn-primary" onclick="downloadVideo(\'' + v.id + '\')" style="font-size:0.85rem;padding:6px 14px">⬇️ ดาวน์โหลดวิดีโอ</button>' : ''}
+          ${v.youtube_url ? '<a href="' + esc(v.youtube_url) + '" target="_blank" class="btn btn-outline" style="font-size:0.85rem;padding:6px 14px">🔗 YouTube</a>' : ''}
+        </div>
       </div>
     `).join('');
   } catch (e) {
     el.innerHTML = '<div class="empty" style="color:var(--red)">โหลดไม่สำเร็จ: ' + e.message + '</div>';
+  }
+}
+
+async function downloadVideo(videoId) {
+  try {
+    const resp = await fetch(API_BASE + '/videos/' + videoId + '/download', {
+      headers: { 'Authorization': 'Bearer ' + _token }
+    });
+    if (!resp.ok) throw new Error('ดาวน์โหลดไม่สำเร็จ: ' + resp.status);
+    const blob = await resp.blob();
+    const cd = resp.headers.get('content-disposition');
+    let filename = 'video.mp4';
+    if (cd) {
+      const m = cd.match(/filename\*?=(?:UTF-8'')?["']?([^"';\n]+)/i);
+      if (m) filename = decodeURIComponent(m[1]);
+    }
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(a.href);
+    toast('ดาวน์โหลดเรียบร้อย', 'success');
+  } catch (e) {
+    toast(e.message, 'error');
   }
 }
 

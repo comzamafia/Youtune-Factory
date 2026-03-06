@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import uuid
+from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
 from app.api.auth import verify_token
@@ -43,3 +45,25 @@ def get_video(
     if not video:
         raise HTTPException(status_code=404, detail="Video not found")
     return video
+
+
+@router.get("/{video_id}/download")
+def download_video(
+    video_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    _token: str = Depends(verify_token),
+):
+    """Download the rendered video file."""
+    video = db.query(Video).filter(Video.id == video_id).first()
+    if not video:
+        raise HTTPException(status_code=404, detail="Video not found")
+    if not video.video_path:
+        raise HTTPException(status_code=404, detail="No video file available")
+    p = Path(video.video_path)
+    if not p.exists():
+        raise HTTPException(status_code=404, detail="Video file not found on disk")
+    return FileResponse(
+        path=p,
+        media_type="video/mp4",
+        filename=p.name,
+    )
