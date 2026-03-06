@@ -74,13 +74,14 @@ class Settings(BaseSettings):
     # 1920x1080 = 16:9 horizontal (standard YouTube)
     video_width: int = 1080
     video_height: int = 1920
-    # Subtitle font size (pixels). For 1080px-wide portrait: ~38px is readable
-    # without covering the frame. For 1920px-wide landscape use ~28px.
-    subtitle_font_size: int = 38
+    # Subtitle font size (pixels). For YouTube Shorts 1080x1920: ~24px
+    # is readable without covering the frame.
+    subtitle_font_size: int = 24
     # Max characters per subtitle line (controls wrapping before splitting to new SRT entry)
     subtitle_max_chars_per_line: int = 28
     # Vertical margin from the bottom edge of the frame (pixels)
-    subtitle_margin_v: int = 80
+    # YouTube Shorts: ~30px sits just above the like/comment buttons
+    subtitle_margin_v: int = 30
     # ── GPU / FFmpeg ───────────────────────────────────────────────────
     use_gpu: bool = True
     ffmpeg_hwaccel: str = "cuda"
