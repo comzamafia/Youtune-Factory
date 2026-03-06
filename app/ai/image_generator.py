@@ -45,8 +45,8 @@ class StableDiffusionGenerator(ImageGeneratorBase):
             "negative_prompt": negative_prompt,
             "steps": 30,
             "cfg_scale": 7.5,
-            "width": 1280,
-            "height": 720,
+            "width": settings.video_width,
+            "height": settings.video_height,
             "sampler_name": "DPM++ 2M Karras",
             "batch_size": 1,
         }
@@ -167,14 +167,16 @@ class PlaceholderImageGenerator(ImageGeneratorBase):
         r1, g1, b1 = (h >> 16) & 0xFF, (h >> 8) & 0xFF, h & 0xFF
         r2, g2, b2 = 255 - r1, 255 - g1, 255 - b1
 
+        w, h_px = settings.video_width, settings.video_height
+
         # Create gradient background
-        img = Image.new("RGB", (1280, 720))
-        for y in range(720):
-            ratio = y / 720
+        img = Image.new("RGB", (w, h_px))
+        for y in range(h_px):
+            ratio = y / h_px
             r = int(r1 + (r2 - r1) * ratio)
             g = int(g1 + (g2 - g1) * ratio)
             b = int(b1 + (b2 - b1) * ratio)
-            for x in range(1280):
+            for x in range(w):
                 img.putpixel((x, y), (r, g, b))
 
         # Overlay prompt text
@@ -197,7 +199,7 @@ class PlaceholderImageGenerator(ImageGeneratorBase):
         if line:
             lines.append(line)
 
-        y_pos = 300
+        y_pos = h_px // 2 - 60
         for line_text in lines:
             draw.text((100, y_pos), line_text, fill=(255, 255, 255), font=font)
             y_pos += 35

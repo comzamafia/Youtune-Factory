@@ -157,7 +157,8 @@ async def main():
     logger.info("[OK] Subtitles -> %s", subtitle_path.name)
 
     # -- Step 6: Render scene clips --
-    logger.info("[RENDER] Rendering scene clips with FFmpeg...")
+    logger.info("[RENDER] Rendering scene clips with FFmpeg (%dx%d)...",
+                settings.video_width, settings.video_height)
     from app.video.renderer import render_scene
 
     clip_paths = []
@@ -166,10 +167,13 @@ async def main():
         duration = (scene.end_time or 6.0) - (scene.start_time or 0.0)
         try:
             render_scene(
-                image_path=Path(scene.image_path),
-                audio_path=Path(scene.voice_path),
+                scene={
+                    "image_path": scene.image_path,
+                    "video_source_path": getattr(scene, "video_source_path", None),
+                    "audio_path": scene.voice_path,
+                    "duration": duration,
+                },
                 output_path=clip_path,
-                duration=duration,
             )
             scene.clip_path = str(clip_path)
             clip_paths.append(clip_path)

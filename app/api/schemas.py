@@ -63,6 +63,7 @@ class SceneResponse(BaseModel):
     mood: Optional[str] = None
     voice_path: Optional[str] = None
     image_path: Optional[str] = None
+    video_source_path: Optional[str] = None
     clip_path: Optional[str] = None
     part_number: int = 1
 

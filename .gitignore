@@ -27,6 +27,19 @@ output/video/*.mp4
 output/thumbnail/*.jpg
 output/thumbnail/*.png
 
+# User media inputs — large binary files, machine-specific
+input/media/*.mp4
+input/media/*.mov
+input/media/*.avi
+input/media/*.mkv
+input/media/*.webm
+input/media/*.jpg
+input/media/*.jpeg
+input/media/*.png
+input/media/*.webp
+input/novels/*.txt
+input/scripts/*
+
 # YouTube credentials — SENSITIVE, never commit
 client_secret.json
 youtube_credentials.json

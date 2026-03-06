@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-from app.video.renderer import _build_ffmpeg_cmd
+from app.video.renderer import _build_ffmpeg_image_cmd
 
 
 def test_build_ffmpeg_cmd_with_gpu():
@@ -15,7 +15,7 @@ def test_build_ffmpeg_cmd_with_gpu():
         mock_settings.ffmpeg_hwaccel = "cuda"
         mock_settings.ffmpeg_vcodec = "h264_nvenc"
 
-        cmd = _build_ffmpeg_cmd(
+        cmd = _build_ffmpeg_image_cmd(
             image_path=Path("scene_001.png"),
             audio_path=Path("scene_001.wav"),
             output_path=Path("scene_001.mp4"),
@@ -34,7 +34,7 @@ def test_build_ffmpeg_cmd_without_gpu():
     with patch("app.video.renderer.settings") as mock_settings:
         mock_settings.use_gpu = False
 
-        cmd = _build_ffmpeg_cmd(
+        cmd = _build_ffmpeg_image_cmd(
             image_path=Path("img.png"),
             audio_path=Path("audio.wav"),
             output_path=Path("out.mp4"),
@@ -50,7 +50,7 @@ def test_build_ffmpeg_cmd_has_required_flags():
     with patch("app.video.renderer.settings") as mock_settings:
         mock_settings.use_gpu = False
 
-        cmd = _build_ffmpeg_cmd(
+        cmd = _build_ffmpeg_image_cmd(
             image_path=Path("i.png"),
             audio_path=Path("a.wav"),
             output_path=Path("o.mp4"),

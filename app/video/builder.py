@@ -62,7 +62,24 @@ def build_final_video(
             sub_output = output_path.with_suffix(".sub.mp4")
             # Escape backslashes and colons for FFmpeg subtitles filter on Windows
             sub_str = str(subtitle_path.resolve()).replace("\\", "/").replace(":", "\\:")
-            vf = f"subtitles='{sub_str}':force_style='FontSize=22,PrimaryColour=&Hffffff&,OutlineColour=&H000000&,Outline=2'"
+            # force_style overrides:
+            #   Alignment=2   → bottom-center (standard subtitle position)
+            #   MarginV       → px gap from frame bottom
+            #   MarginL/R=40  → side padding so long lines don't touch edges
+            #   WrapStyle=1   → wrap at word boundary (line length controlled by SRT chunks)
+            #   Outline=2     → black outline for readability on any background
+            #   Shadow=1      → subtle drop shadow
+            sub_style = (
+                f"FontSize={settings.subtitle_font_size},"
+                f"PrimaryColour=&Hffffff&,"
+                f"OutlineColour=&H000000&,"
+                f"Outline=2,Shadow=1,"
+                f"Alignment=2,"
+                f"MarginV={settings.subtitle_margin_v},"
+                f"MarginL=40,MarginR=40,"
+                f"WrapStyle=1"
+            )
+            vf = f"subtitles='{sub_str}':force_style='{sub_style}'"
 
             cmd_sub = [
                 "ffmpeg", "-y",

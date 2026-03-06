@@ -92,6 +92,8 @@ class Scene(Base):
     mood: Mapped[str] = mapped_column(String(50), nullable=True)
     voice_path: Mapped[str | None] = mapped_column(Text, nullable=True)
     image_path: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # Source video clip supplied by the user (overrides AI-generated image when set)
+    video_source_path: Mapped[str | None] = mapped_column(Text, nullable=True)
     clip_path: Mapped[str | None] = mapped_column(Text, nullable=True)
     part_number: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
 

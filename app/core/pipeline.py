@@ -21,6 +21,7 @@ from app.core.tasks import (
     task_update_scene_timings,
     task_upload_youtube,
 )
+from app.core.story_processor import assign_media_to_scenes
 
 logger = logging.getLogger(__name__)
 
@@ -111,6 +112,10 @@ def _pipeline_after_script(self, script_result: dict, novel_id: str, pipeline_jo
         if not scenes:
             _update_job_status(pid, "failed")
             raise ValueError(f"No scenes found for novel {nid} after script generation")
+
+        # Assign user-supplied media from input/media/ before generating images.
+        # Scenes that receive a video/image here will skip AI image generation.
+        assign_media_to_scenes(scenes, db)
 
         # Group scenes by part_number for multi-part video support
         part_groups: dict[int, list[Scene]] = {}

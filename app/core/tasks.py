@@ -148,6 +148,16 @@ def task_generate_image(self, scene_id: str, job_id: str | None = None):
             if not scene:
                 raise ValueError(f"Scene {sid} not found")
 
+            # Skip AI generation if the scene already has a user-supplied image or video
+            if scene.image_path or scene.video_source_path:
+                logger.info(
+                    "Scene %s already has media assigned — skipping AI image generation",
+                    scene.scene_number,
+                )
+                if jid:
+                    _update_job(jid, "completed")
+                return {"scene_id": scene_id, "skipped": True}
+
             img_gen = get_image_generator()
             output_path = settings.scenes_dir / f"scene_{scene.scene_number:04d}.png"
             _run_async(img_gen.generate(scene.image_prompt or scene.scene_text, output_path))
@@ -228,11 +238,16 @@ def task_render_video(self, novel_id: str, job_id: str | None = None, part_numbe
             # Render individual scene clips in parallel (configurable workers)
             scene_render_data = []
             for s in scenes:
-                if not s.image_path or not s.voice_path:
-                    raise ValueError(f"Scene {s.scene_number} missing image or voice")
+                has_visual = s.image_path or s.video_source_path
+                if not has_visual or not s.voice_path:
+                    raise ValueError(
+                        f"Scene {s.scene_number} missing "
+                        f"{'visual (image or video)' if not has_visual else 'voice audio'}"
+                    )
                 clip_path = settings.scenes_dir / f"clip_{s.scene_number:04d}.mp4"
                 scene_render_data.append({
                     "image_path": s.image_path,
+                    "video_source_path": s.video_source_path,
                     "audio_path": s.voice_path,
                     "output_path": str(clip_path),
                     "duration": (s.end_time or 6.0) - (s.start_time or 0.0),

@@ -4,15 +4,76 @@ from __future__ import annotations
 
 import logging
 import uuid
+from itertools import zip_longest
 from pathlib import Path
 
 from sqlalchemy.orm import Session
 
 from app.ai.script_generator import SceneData, get_script_generator
 from app.ai.subtitle_generator import get_audio_duration
+from app.config import settings
 from app.core.models import Novel, Scene
 
 logger = logging.getLogger(__name__)
+
+# Supported media file extensions
+_VIDEO_EXTS = {".mp4", ".mov", ".avi", ".mkv", ".webm"}
+_IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".webp", ".bmp"}
+
+
+# ── Media Assignment ──────────────────────────────────────────────────────────
+
+
+def assign_media_to_scenes(scenes: list[Scene], db: Session) -> None:
+    """Scan ``input/media/`` and assign user-supplied media to scenes.
+
+    Videos and images found in the media directory are interleaved
+    (image, video, image, video, …) and assigned to scenes in order,
+    cycling back to the start if there are more scenes than media files.
+
+    - Scenes assigned an image have ``image_path`` set (skips AI generation).
+    - Scenes assigned a video have ``video_source_path`` set (rendered with
+      the video looped to match TTS audio duration; skips AI image generation).
+    - Scenes that receive no media from the pool are left untouched (AI image
+      will be generated as normal).
+
+    If ``input/media/`` does not exist or is empty, the function is a no-op.
+    """
+    media_dir = settings.media_input_dir
+    if not media_dir.exists():
+        logger.info("No media directory found at %s — skipping media assignment", media_dir)
+        return
+
+    videos = sorted(f for f in media_dir.iterdir() if f.suffix.lower() in _VIDEO_EXTS)
+    images = sorted(f for f in media_dir.iterdir() if f.suffix.lower() in _IMAGE_EXTS)
+
+    if not videos and not images:
+        logger.info("No media files in %s — skipping media assignment", media_dir)
+        return
+
+    # Interleave images and videos: image0, video0, image1, video1, …
+    media_pool: list[Path] = []
+    for pair in zip_longest(images, videos):
+        media_pool.extend(f for f in pair if f is not None)
+
+    logger.info(
+        "Media pool: %d images + %d videos → %d total, assigning to %d scenes",
+        len(images), len(videos), len(media_pool), len(scenes),
+    )
+
+    for i, scene in enumerate(scenes):
+        item = media_pool[i % len(media_pool)]
+        if item.suffix.lower() in _VIDEO_EXTS:
+            scene.video_source_path = str(item)
+            scene.image_path = None  # video source takes precedence
+            logger.debug("Scene %d → video source: %s", scene.scene_number, item.name)
+        else:
+            scene.image_path = str(item)
+            scene.video_source_path = None
+            logger.debug("Scene %d → image: %s", scene.scene_number, item.name)
+
+    db.commit()
+    logger.info("Media assigned to %d scenes.", len(scenes))
 
 
 # ── File Ingestion ─────────────────────────────────────────────────────────────

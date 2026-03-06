@@ -59,7 +59,18 @@ class Settings(BaseSettings):
     # ── YouTube ────────────────────────────────────────────────────────
     youtube_client_secret_file: str = "client_secret.json"
     youtube_credentials_file: str = "youtube_credentials.json"
-
+    # ── Video Dimensions ────────────────────────────────────────────────────
+    # 1080x1920 = 9:16 vertical (YouTube Shorts / TikTok / Reels)
+    # 1920x1080 = 16:9 horizontal (standard YouTube)
+    video_width: int = 1080
+    video_height: int = 1920
+    # Subtitle font size (pixels). For 1080px-wide portrait: ~38px is readable
+    # without covering the frame. For 1920px-wide landscape use ~28px.
+    subtitle_font_size: int = 38
+    # Max characters per subtitle line (controls wrapping before splitting to new SRT entry)
+    subtitle_max_chars_per_line: int = 28
+    # Vertical margin from the bottom edge of the frame (pixels)
+    subtitle_margin_v: int = 80
     # ── GPU / FFmpeg ───────────────────────────────────────────────────
     use_gpu: bool = True
     ffmpeg_hwaccel: str = "cuda"
@@ -90,6 +101,12 @@ class Settings(BaseSettings):
     @property
     def scripts_dir(self) -> Path:
         return self.root_path / self.input_dir / "scripts"
+
+    @property
+    def media_input_dir(self) -> Path:
+        """Drop video clips (.mp4/.mov/.avi) and images (.jpg/.png) here.
+        The pipeline will assign them to scenes in alternating order."""
+        return self.root_path / self.input_dir / "media"
 
     @property
     def images_dir(self) -> Path:
@@ -128,6 +145,7 @@ class Settings(BaseSettings):
         dirs = [
             self.novels_dir,
             self.scripts_dir,
+            self.media_input_dir,
             self.images_dir,
             self.music_dir,
             self.fonts_dir,
