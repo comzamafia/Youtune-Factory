@@ -208,6 +208,13 @@ async function api(path, method = 'GET', body = null) {
   const res = await fetch(API_BASE + path, opts);
   if (!res.ok) {
     const err = await res.json().catch(() => ({ detail: res.statusText }));
+    if (res.status === 401) {
+      // Stale key in sessionStorage — force re-login
+      sessionStorage.removeItem('apiKey');
+      API_KEY = '';
+      document.getElementById('mainApp').style.display = 'none';
+      document.getElementById('loginScreen').style.display = 'flex';
+    }
     throw new Error(err.detail || res.statusText);
   }
   if (res.status === 204) return null;
