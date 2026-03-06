@@ -252,7 +252,7 @@ def _pipeline_thread(novel_id: str, job_id: str):
 
     except Exception as exc:
         logger.exception("[sync] Pipeline failed for novel %s: %s", novel_id, exc)
-        _set_job(db, jid, "failed", str(exc)[:500])
+        _set_job(db, jid, "failed", str(exc)[:1000])
         try:
             novel = db.query(Novel).filter(Novel.id == nid).first()
             if novel:

@@ -120,22 +120,34 @@ def render_scene(
     audio_path = Path(scene["audio_path"])
     duration = scene.get("duration")
     video_source = scene.get("video_source_path")
+    image_path = scene.get("image_path")
 
+    # Validate inputs exist
+    if not audio_path.exists():
+        raise RuntimeError(f"Audio file not found: {audio_path}")
     if video_source:
-        cmd = _build_ffmpeg_video_cmd(Path(video_source), audio_path, output_path, duration)
+        vs = Path(video_source)
+        if not vs.exists():
+            raise RuntimeError(f"Video source not found: {vs}")
+        cmd = _build_ffmpeg_video_cmd(vs, audio_path, output_path, duration)
         scene_type = "video"
     else:
-        cmd = _build_ffmpeg_image_cmd(Path(scene["image_path"]), audio_path, output_path, duration)
+        if not image_path:
+            raise RuntimeError(f"No image_path or video_source_path for {output_path.name}")
+        ip = Path(image_path)
+        if not ip.exists():
+            raise RuntimeError(f"Image file not found: {ip}")
+        cmd = _build_ffmpeg_image_cmd(ip, audio_path, output_path, duration)
         scene_type = "image"
 
-    logger.info("Rendering scene (%s): %s", scene_type, output_path.name)
+    logger.info("Rendering scene (%s): %s | cmd: %s", scene_type, output_path.name, " ".join(cmd))
 
     # Scale timeout: 120s base + extra time for long scenes
     timeout = max(120, int((duration or 6.0) * 20))
     proc = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
     if proc.returncode != 0:
-        logger.error("FFmpeg error: %s", proc.stderr[-500:])
-        raise RuntimeError(f"FFmpeg render failed for {output_path.name}: {proc.stderr[-200:]}")
+        logger.error("FFmpeg FULL stderr:\n%s", proc.stderr)
+        raise RuntimeError(f"FFmpeg render failed for {output_path.name}: {proc.stderr[-500:]}")
 
     logger.info("Scene rendered: %s", output_path.name)
     return output_path
