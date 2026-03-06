@@ -119,8 +119,10 @@ def _pipeline_thread(novel_id: str, job_id: str):
         logger.info("[sync] Step 2/6: Generating voice for %d scenes…", len(scenes))
         from app.ai.voice_generator import get_voice_generator
         voice_gen = get_voice_generator()
+        # edge_tts produces MP3; other engines may produce WAV
+        voice_ext = ".mp3" if settings.tts_engine.lower() == "edge_tts" else ".wav"
         for s in scenes:
-            out = settings.voice_dir / f"scene_{s.scene_number:04d}.wav"
+            out = settings.voice_dir / f"scene_{s.scene_number:04d}{voice_ext}"
             _run_async(voice_gen.generate(s.scene_text, out))
             s.voice_path = str(out)
         db.commit()
