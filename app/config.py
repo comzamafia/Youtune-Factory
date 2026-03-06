@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -16,6 +17,13 @@ class Settings(BaseSettings):
         env_file_encoding="utf-8",
         extra="ignore",
     )
+
+    @field_validator("use_celery", "use_gpu", "cleanup_clips_after_build", mode="before")
+    @classmethod
+    def _strip_bool(cls, v):
+        if isinstance(v, str):
+            return v.strip()
+        return v
 
     # ── Paths ──────────────────────────────────────────────────────────
     root_path: Path = Path(__file__).resolve().parent.parent
