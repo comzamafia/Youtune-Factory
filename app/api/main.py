@@ -4,9 +4,12 @@ from __future__ import annotations
 
 import logging
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
 from app.api.routes import jobs, novels, videos
 from app.config import settings
@@ -67,14 +70,13 @@ app.include_router(jobs.router, prefix="/api/v1")
 app.include_router(videos.router, prefix="/api/v1")
 
 
-@app.get("/", tags=["health"])
-def root():
-    """Health check endpoint."""
-    return {
-        "service": "AI YouTube Novel Factory",
-        "status": "running",
-        "version": "1.0.0",
-    }
+@app.get("/", tags=["frontend"])
+def serve_frontend():
+    """Serve the frontend dashboard."""
+    html = Path(__file__).resolve().parent.parent.parent / "frontend" / "index.html"
+    if html.exists():
+        return FileResponse(html, media_type="text/html")
+    return {"service": "AI YouTube Novel Factory", "status": "running", "version": "1.0.0"}
 
 
 @app.get("/api/v1/health", tags=["health"])
