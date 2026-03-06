@@ -109,12 +109,12 @@ def build_final_video(
             cmd_music = [
                 "ffmpeg", "-y",
                 "-i", str(current_input),
-                "-i", str(music_path),
+                "-stream_loop", "-1", "-i", str(music_path),
                 "-filter_complex", filter_complex,
                 "-map", "0:v",
                 "-map", "[aout]",
                 "-c:v", "copy",
-                "-c:a", "aac", "-b:a", "192k",
+                "-c:a", "aac", "-b:a", "128k", "-ar", "44100",
                 str(music_output),
             ]
             logger.info("Mixing background music…")

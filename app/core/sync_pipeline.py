@@ -209,6 +209,10 @@ def _pipeline_thread(novel_id: str, job_id: str):
             vid_name = f"{safe_title}{part_suffix}.mp4"
             vid_path = settings.video_output_dir / vid_name
             music_files = list(settings.music_dir.glob("*.mp3")) + list(settings.music_dir.glob("*.wav"))
+            if not music_files:
+                from app.ai.music_generator import generate_ambient_music
+                ambient = generate_ambient_music(settings.music_dir / "ambient_bg.wav")
+                music_files = [ambient]
             build_final_video(
                 scene_clips=clip_paths,
                 output_path=vid_path,
