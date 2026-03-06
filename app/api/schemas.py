@@ -127,6 +127,14 @@ class BatchPipelineResponse(BaseModel):
     message: str
 
 
+# ── Media ──────────────────────────────────────────────────────────────────────
+
+
+class MediaListResponse(BaseModel):
+    files: list[str]
+    count: int
+
+
 # ── Generic ────────────────────────────────────────────────────────────────────
 
 

@@ -120,17 +120,39 @@ header h1 span{color:var(--accent)}
     <!-- Tabs -->
     <div class="tabs">
       <div class="tab active" data-tab="novels">นิยาย</div>
+      <div class="tab" data-tab="media">สื่อ (รูป/วิดีโอ)</div>
       <div class="tab" data-tab="jobs">งาน</div>
-      <div class="tab" data-tab="videos">วิดีโอ</div>
+      <div class="tab" data-tab="videos">วิดีโอที่สร้าง</div>
     </div>
 
     <!-- Novels Tab -->
     <div class="tab-content active" id="tab-novels">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
         <h2 style="font-size:18px">รายการนิยาย</h2>
-        <button class="btn btn-primary" onclick="showCreateModal()">+ สร้างนิยายใหม่</button>
+        <label class="btn btn-primary" style="cursor:pointer">
+          &#128194; อัปโหลดไฟล์ .txt
+          <input type="file" id="novelFileInput" accept=".txt,.text" multiple style="display:none" onchange="uploadNovelFiles(this.files)">
+        </label>
       </div>
+      <div id="novelUploadStatus" style="margin-bottom:12px"></div>
       <div id="novelsList"></div>
+    </div>
+
+    <!-- Media Tab -->
+    <div class="tab-content" id="tab-media">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+        <h2 style="font-size:18px">รูปภาพ / วิดีโอ สำหรับ Render</h2>
+        <label class="btn btn-primary" style="cursor:pointer">
+          &#128247; อัปโหลดสื่อ
+          <input type="file" id="mediaFileInput" accept=".jpg,.jpeg,.png,.webp,.bmp,.mp4,.mov,.avi,.mkv,.webm" multiple style="display:none" onchange="uploadMediaFiles(this.files)">
+        </label>
+      </div>
+      <p style="color:var(--text2);font-size:13px;margin-bottom:16px">
+        อัปโหลดรูปภาพ (.jpg, .png, .webp) และวิดีโอ (.mp4, .mov) ที่ต้องการให้โปรแกรม render รวมกับเสียง
+        — ไฟล์จะถูกสลับกัน (รูป, วิดีโอ, รูป, วิดีโอ) ในแต่ละ scene
+      </p>
+      <div id="mediaUploadStatus" style="margin-bottom:12px"></div>
+      <div id="mediaList"></div>
     </div>
 
     <!-- Jobs Tab -->
@@ -153,29 +175,6 @@ header h1 span{color:var(--accent)}
   </div>
 </div>
 
-<!-- Create Novel Modal -->
-<div class="modal-overlay" id="createModal">
-  <div class="modal">
-    <h3>สร้างนิยายใหม่</h3>
-    <div class="form-group">
-      <label>ชื่อเรื่อง</label>
-      <input type="text" id="novelTitle" placeholder="เช่น ดินแดนมังกร">
-    </div>
-    <div class="form-group">
-      <label>ผู้แต่ง</label>
-      <input type="text" id="novelAuthor" placeholder="ชื่อผู้แต่ง" value="Unknown">
-    </div>
-    <div class="form-group">
-      <label>เนื้อหานิยาย (ขั้นต่ำ 50 ตัวอักษร)</label>
-      <textarea id="novelText" placeholder="วางเนื้อหานิยายที่นี่..."></textarea>
-    </div>
-    <div style="display:flex;gap:12px;justify-content:flex-end">
-      <button class="btn" style="background:var(--surface2);color:var(--text)" onclick="hideCreateModal()">ยกเลิก</button>
-      <button class="btn btn-primary" id="btnCreate" onclick="createNovel()">สร้าง</button>
-    </div>
-  </div>
-</div>
-
 <script>
 const API_BASE = window.location.origin + '/api/v1';
 let API_KEY = '';
@@ -194,13 +193,12 @@ function logout() {
   document.getElementById('loginScreen').style.display = 'flex';
   document.getElementById('apiKeyInput').value = '';
 }
-// Auto-login from session
 (function() {
   const saved = sessionStorage.getItem('apiKey');
   if (saved) { API_KEY = saved; checkHealth(); }
 })();
 
-// ── API Helper ──
+// ── API Helpers ──
 async function api(path, method = 'GET', body = null) {
   const opts = {
     method,
@@ -216,6 +214,19 @@ async function api(path, method = 'GET', body = null) {
   return res.json();
 }
 
+async function apiUpload(path, formData) {
+  const res = await fetch(API_BASE + path, {
+    method: 'POST',
+    headers: { 'Authorization': 'Bearer ' + API_KEY },
+    body: formData
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: res.statusText }));
+    throw new Error(err.detail || res.statusText);
+  }
+  return res.json();
+}
+
 // ── Health Check ──
 async function checkHealth() {
   try {
@@ -227,7 +238,7 @@ async function checkHealth() {
     document.getElementById('mainApp').style.display = 'block';
     loadNovels();
   } catch (e) {
-    toast('เชื่อมต่อ API ไม่ได้: ' + e.message, 'error');
+    toast('API connection failed: ' + e.message, 'error');
   }
 }
 
@@ -237,13 +248,36 @@ document.querySelectorAll('.tab').forEach(tab => {
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
     document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
     tab.classList.add('active');
-    const target = document.getElementById('tab-' + tab.dataset.tab);
-    target.classList.add('active');
+    document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
     if (tab.dataset.tab === 'novels') loadNovels();
+    if (tab.dataset.tab === 'media') loadMedia();
     if (tab.dataset.tab === 'jobs') loadJobs();
     if (tab.dataset.tab === 'videos') loadVideos();
   });
 });
+
+// ── Novel Upload ──
+async function uploadNovelFiles(files) {
+  const status = document.getElementById('novelUploadStatus');
+  if (!files.length) return;
+  status.innerHTML = '<span class="spinner"></span> กำลังอัปโหลด ' + files.length + ' ไฟล์...';
+  let ok = 0, fail = 0;
+  for (const f of files) {
+    try {
+      const fd = new FormData();
+      fd.append('file', f);
+      await apiUpload('/novels/upload', fd);
+      ok++;
+    } catch (e) {
+      fail++;
+      toast(f.name + ': ' + e.message, 'error');
+    }
+  }
+  status.innerHTML = '';
+  if (ok) toast('อัปโหลดสำเร็จ ' + ok + ' ไฟล์');
+  document.getElementById('novelFileInput').value = '';
+  loadNovels();
+}
 
 // ── Novels ──
 async function loadNovels() {
@@ -251,7 +285,7 @@ async function loadNovels() {
   try {
     const novels = await api('/novels');
     if (!novels.length) {
-      el.innerHTML = '<div class="empty"><div class="empty-icon">&#128214;</div>ยังไม่มีนิยาย — กดปุ่ม "สร้างนิยายใหม่" เพื่อเริ่มต้น</div>';
+      el.innerHTML = '<div class="empty"><div class="empty-icon">&#128214;</div>ยังไม่มีนิยาย — อัปโหลดไฟล์ .txt เพื่อเริ่มต้น</div>';
       return;
     }
     el.innerHTML = novels.map(n => `
@@ -274,43 +308,62 @@ async function loadNovels() {
   } catch (e) { el.innerHTML = '<div class="empty">Error: ' + esc(e.message) + '</div>'; }
 }
 
-function showCreateModal() { document.getElementById('createModal').classList.add('show'); }
-function hideCreateModal() { document.getElementById('createModal').classList.remove('show'); }
-
-async function createNovel() {
-  const btn = document.getElementById('btnCreate');
-  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>';
-  try {
-    const data = {
-      title: document.getElementById('novelTitle').value.trim(),
-      author: document.getElementById('novelAuthor').value.trim() || 'Unknown',
-      text: document.getElementById('novelText').value
-    };
-    if (!data.title) throw new Error('กรุณากรอกชื่อเรื่อง');
-    await api('/novels', 'POST', data);
-    toast('สร้างนิยายสำเร็จ');
-    hideCreateModal();
-    document.getElementById('novelTitle').value = '';
-    document.getElementById('novelText').value = '';
-    loadNovels();
-  } catch (e) { toast(e.message, 'error'); }
-  btn.disabled = false; btn.textContent = 'สร้าง';
-}
-
 async function deleteNovel(id, title) {
-  if (!confirm('ลบนิยาย "' + title + '" ? (ลบทั้งหมดรวมวิดีโอ)')) return;
-  try {
-    await api('/novels/' + id, 'DELETE');
-    toast('ลบสำเร็จ');
-    loadNovels();
-  } catch (e) { toast(e.message, 'error'); }
+  if (!confirm('ลบนิยาย "' + title + '" ?')) return;
+  try { await api('/novels/' + id, 'DELETE'); toast('ลบสำเร็จ'); loadNovels(); }
+  catch (e) { toast(e.message, 'error'); }
 }
 
 async function triggerPipeline(novelId) {
   try {
     const res = await api('/novels/' + novelId + '/process', 'POST');
-    toast(res.message + ' (Job: ' + res.job_id.slice(0, 8) + '...)');
-    loadNovels();
+    toast(res.message + ' (Job: ' + res.job_id.slice(0,8) + '...)');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// ── Media Upload ──
+async function uploadMediaFiles(files) {
+  const status = document.getElementById('mediaUploadStatus');
+  if (!files.length) return;
+  status.innerHTML = '<span class="spinner"></span> กำลังอัปโหลด ' + files.length + ' ไฟล์...';
+  try {
+    const fd = new FormData();
+    for (const f of files) fd.append('files', f);
+    const res = await apiUpload('/novels/media/upload', fd);
+    toast('อัปโหลดสำเร็จ ' + res.count + ' ไฟล์');
+  } catch (e) { toast(e.message, 'error'); }
+  status.innerHTML = '';
+  document.getElementById('mediaFileInput').value = '';
+  loadMedia();
+}
+
+async function loadMedia() {
+  const el = document.getElementById('mediaList');
+  try {
+    const data = await api('/novels/media/list');
+    if (!data.files.length) {
+      el.innerHTML = '<div class="empty"><div class="empty-icon">&#128247;</div>ยังไม่มีสื่อ — อัปโหลดรูปภาพหรือวิดีโอ</div>';
+      return;
+    }
+    el.innerHTML = '<div class="card"><div class="card-header"><span class="card-title">ไฟล์สื่อ (' + data.count + ' ไฟล์)</span></div>' +
+      data.files.map(f => {
+        const isVideo = /\.(mp4|mov|avi|mkv|webm)$/i.test(f);
+        const icon = isVideo ? '&#127909;' : '&#128444;';
+        const typeLabel = isVideo ? 'วิดีโอ' : 'รูปภาพ';
+        return `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)">
+          <span>${icon} ${esc(f)} <span style="color:var(--text2);font-size:12px">(${typeLabel})</span></span>
+          <button class="btn btn-sm btn-danger" onclick="deleteMedia('${esc(f)}')">&#128465;</button>
+        </div>`;
+      }).join('') + '</div>';
+  } catch (e) { el.innerHTML = '<div class="empty">Error: ' + esc(e.message) + '</div>'; }
+}
+
+async function deleteMedia(filename) {
+  if (!confirm('ลบไฟล์ "' + filename + '" ?')) return;
+  try {
+    await api('/novels/media/' + encodeURIComponent(filename), 'DELETE');
+    toast('ลบสำเร็จ');
+    loadMedia();
   } catch (e) { toast(e.message, 'error'); }
 }
 
@@ -391,12 +444,11 @@ function toast(msg, type = 'success') {
   setTimeout(() => t.remove(), 4000);
 }
 
-// Auto-refresh jobs every 10s if on jobs tab
+// Auto-refresh jobs every 10s
 setInterval(() => {
   if (document.querySelector('.tab.active')?.dataset.tab === 'jobs') loadJobs();
 }, 10000);
 
-// Enter key on login
 document.getElementById('apiKeyInput').addEventListener('keydown', e => {
   if (e.key === 'Enter') login();
 });
