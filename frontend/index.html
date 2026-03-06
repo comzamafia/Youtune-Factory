@@ -567,8 +567,8 @@ async function loadVideos() {
 
 async function downloadVideo(videoId) {
   try {
-    const resp = await fetch(API_BASE + '/videos/' + videoId + '/download', {
-      headers: { 'Authorization': 'Bearer ' + _token }
+    const resp = await fetch(API + '/videos/' + videoId + '/download', {
+      headers: { 'Authorization': 'Bearer ' + TOKEN }
     });
     if (!resp.ok) throw new Error('ดาวน์โหลดไม่สำเร็จ: ' + resp.status);
     const blob = await resp.blob();
