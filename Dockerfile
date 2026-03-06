@@ -48,7 +48,12 @@ RUN groupadd -r appuser && useradd -r -g appuser appuser \
 USER appuser
 
 # Railway injects PORT; fallback to 8000 for local docker run
-ENV PORT=8000
+# Force UTF-8 everywhere so Unicode in logs/banners never crashes
+ENV PORT=8000 \
+    PYTHONIOENCODING=utf-8 \
+    PYTHONUTF8=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
 
 EXPOSE $PORT
 

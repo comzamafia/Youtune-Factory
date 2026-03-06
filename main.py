@@ -33,12 +33,13 @@ def main():
 
     import uvicorn
 
-    print(r"""
-    ╔═══════════════════════════════════════════════╗
-    ║   AI YouTube Novel Factory  v1.0.0            ║
-    ║   Novel → Script → Voice → Image → Video → YT ║
-    ╚═══════════════════════════════════════════════╝
-    """)
+    print(
+        "\n"
+        "  +-----------------------------------------------+\n"
+        "  |   AI YouTube Novel Factory  v1.0.0           |\n"
+        "  |   Novel -> Script -> Voice -> Image -> Video  |\n"
+        "  +-----------------------------------------------+\n"
+    )
 
     uvicorn.run(
         "app.api.main:app",
