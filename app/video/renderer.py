@@ -40,7 +40,7 @@ def _build_ffmpeg_image_cmd(
     cmd.extend(["-r", "25"])
 
     # Scale/pad + fade in/out for smooth scene transitions
-    fade_d = 0.4  # fade duration in seconds
+    fade_d = 0.1
     vf_parts = [
         f"scale={settings.video_width}:{settings.video_height}"
         f":force_original_aspect_ratio=decrease",
@@ -101,7 +101,7 @@ def _build_ffmpeg_video_cmd(
     cmd.extend(["-c:a", "aac", "-b:a", "128k", "-ar", "44100", "-pix_fmt", "yuv420p"])
 
     # Scale/pad + fade in/out for smooth scene transitions
-    fade_d = 0.4
+    fade_d = 0.1
     vf_parts = [
         f"scale={settings.video_width}:{settings.video_height}"
         f":force_original_aspect_ratio=decrease",
