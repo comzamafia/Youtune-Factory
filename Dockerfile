@@ -60,5 +60,5 @@ EXPOSE $PORT
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
     CMD curl -sf http://localhost:$PORT/api/v1/health || exit 1
 
-CMD ["sh", "-c", "python main.py --host 0.0.0.0 --port $PORT"]
+CMD ["python", "main.py"]
 
