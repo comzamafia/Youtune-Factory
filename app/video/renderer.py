@@ -26,14 +26,14 @@ def _build_ffmpeg_image_cmd(
         cmd.extend(["-hwaccel", settings.ffmpeg_hwaccel])
 
     # Input: loop image with explicit framerate (required for FFmpeg 7.x)
-    cmd.extend(["-framerate", "25", "-loop", "1", "-i", str(image_path)])
+    cmd.extend(["-framerate", "1", "-loop", "1", "-i", str(image_path)])
     cmd.extend(["-i", str(audio_path)])
 
-    # Video codec
+    # Video codec — ultrafast + threads 1 to stay within Railway memory limits
     if settings.use_gpu:
         cmd.extend(["-c:v", settings.ffmpeg_vcodec])
     else:
-        cmd.extend(["-c:v", "libx264", "-preset", "fast", "-tune", "stillimage"])
+        cmd.extend(["-c:v", "libx264", "-preset", "ultrafast", "-threads", "1"])
 
     cmd.extend(["-c:a", "aac", "-b:a", "128k", "-ar", "44100"])
     cmd.extend(["-pix_fmt", "yuv420p"])
