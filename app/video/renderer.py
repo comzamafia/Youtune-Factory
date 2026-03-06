@@ -39,18 +39,14 @@ def _build_ffmpeg_image_cmd(
     cmd.extend(["-pix_fmt", "yuv420p"])
     cmd.extend(["-r", "25"])
 
-    # Scale/pad + fade in/out for smooth scene transitions
-    fade_d = 0.1
-    vf_parts = [
+    # Scale and pad to configured output dimensions (default 1080×1920 = 9:16 vertical)
+    vf = (
         f"scale={settings.video_width}:{settings.video_height}"
-        f":force_original_aspect_ratio=decrease",
+        f":force_original_aspect_ratio=decrease,"
         f"pad={settings.video_width}:{settings.video_height}"
-        f":(ow-iw)/2:(oh-ih)/2",
-        f"fade=t=in:st=0:d={fade_d}",
-    ]
-    if duration and duration > fade_d * 2:
-        vf_parts.append(f"fade=t=out:st={duration - fade_d:.3f}:d={fade_d}")
-    cmd.extend(["-vf", ",".join(vf_parts)])
+        f":(ow-iw)/2:(oh-ih)/2"
+    )
+    cmd.extend(["-vf", vf])
 
     # Duration: use audio length or explicit duration
     if duration:
@@ -100,18 +96,14 @@ def _build_ffmpeg_video_cmd(
 
     cmd.extend(["-c:a", "aac", "-b:a", "128k", "-ar", "44100", "-pix_fmt", "yuv420p"])
 
-    # Scale/pad + fade in/out for smooth scene transitions
-    fade_d = 0.1
-    vf_parts = [
+    # Scale and pad to configured output dimensions (default 1080×1920 = 9:16 vertical)
+    vf = (
         f"scale={settings.video_width}:{settings.video_height}"
-        f":force_original_aspect_ratio=decrease",
+        f":force_original_aspect_ratio=decrease,"
         f"pad={settings.video_width}:{settings.video_height}"
-        f":(ow-iw)/2:(oh-ih)/2",
-        f"fade=t=in:st=0:d={fade_d}",
-    ]
-    if duration and duration > fade_d * 2:
-        vf_parts.append(f"fade=t=out:st={duration - fade_d:.3f}:d={fade_d}")
-    cmd.extend(["-vf", ",".join(vf_parts)])
+        f":(ow-iw)/2:(oh-ih)/2"
+    )
+    cmd.extend(["-vf", vf])
 
     if duration:
         cmd.extend(["-t", str(duration)])
