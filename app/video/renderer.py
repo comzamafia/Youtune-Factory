@@ -148,22 +148,27 @@ def render_scene(
     proc = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
     if proc.returncode != 0:
         logger.error("FFmpeg FULL stderr:\n%s", proc.stderr)
-        # Extract meaningful error lines (skip version/config noise and progress)
+        # Extract meaningful error lines (skip all noise, keep only errors/warnings)
         err_lines = []
         for line in proc.stderr.splitlines():
             low = line.lower()
-            # Skip noisy lines: version, config, progress
+            # Skip noisy lines
             if any(skip in low for skip in [
                 "ffmpeg version", "built with", "configuration:", "--enable-",
                 "--disable-", "libavutil", "libavcodec", "libavformat",
                 "libavdevice", "libavfilter", "libswscale", "libswresample",
                 "libpostproc", "speed=n/a", "bitrate=n/a",
+                "input #", "duration:", "stream #", "stream mapping",
+                "press [q]", "using cpu capabilities", "profile high",
+                "264 - core", "kb/s", "estimating duration",
             ]):
                 continue
             if line.strip():
                 err_lines.append(line.strip())
-        err_summary = "\n".join(err_lines[:30]) or proc.stderr[:800]
-        raise RuntimeError(f"FFmpeg render failed for {output_path.name}:\n{err_summary}")
+        err_summary = "\n".join(err_lines[-20:]) or proc.stderr[-800:]
+        raise RuntimeError(
+            f"FFmpeg render failed for {output_path.name} (rc={proc.returncode}):\n{err_summary}"
+        )
 
     logger.info("Scene rendered: %s", output_path.name)
     return output_path
