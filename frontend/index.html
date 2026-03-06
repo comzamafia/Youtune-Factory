@@ -474,13 +474,12 @@ async function loadJobs() {
       <div class="card">
         <div class="card-header">
           <div>
-            <div class="card-title">งาน ${j.id.substring(0,8)}…</div>
-            <div class="card-meta">${fmtDate(j.created_at)}</div>
+            <div class="card-title">${esc(j.job_type || 'งาน')} · ${j.job_id.substring(0,8)}…</div>
+            <div class="card-meta">${fmtDate(j.created_at)}${j.started_at ? ' → เริ่ม ' + fmtDate(j.started_at) : ''}${j.finished_at ? ' → เสร็จ ' + fmtDate(j.finished_at) : ''}</div>
           </div>
           <span class="badge ${badgeClass(j.status)}">${esc(j.status)}</span>
         </div>
-        ${j.error ? '<div style="color:var(--red);font-size:13px;margin-top:8px">❌ ' + esc(j.error) + '</div>' : ''}
-        ${j.progress != null ? '<div style="margin-top:8px"><div style="background:var(--surface2);border-radius:4px;height:6px;overflow:hidden"><div style="background:var(--accent);height:100%;width:' + (j.progress||0) + '%;transition:width .3s"></div></div><div style="font-size:11px;color:var(--text2);margin-top:4px">' + (j.progress||0) + '%</div></div>' : ''}
+        ${j.error_message ? '<div style="color:var(--red);font-size:13px;margin-top:8px">❌ ' + esc(j.error_message) + '</div>' : ''}
       </div>
     `).join('');
   } catch (e) {
@@ -500,11 +499,12 @@ async function loadVideos() {
       <div class="card">
         <div class="card-header">
           <div>
-            <div class="card-title">${esc(v.title || 'วิดีโอ')}</div>
-            <div class="card-meta">${fmtDate(v.created_at)} · ${v.file_path || ''}</div>
+            <div class="card-title">วิดีโอ Part ${v.part_number || 1} · ${v.id.substring(0,8)}…</div>
+            <div class="card-meta">${fmtDate(v.created_at)}${v.video_path ? ' · ' + esc(v.video_path) : ''}</div>
           </div>
           <span class="badge ${badgeClass(v.status)}">${esc(v.status || 'ready')}</span>
         </div>
+        ${v.youtube_url ? '<div style="margin-top:8px"><a href="' + esc(v.youtube_url) + '" target="_blank">🔗 YouTube</a></div>' : ''}
       </div>
     `).join('');
   } catch (e) {
