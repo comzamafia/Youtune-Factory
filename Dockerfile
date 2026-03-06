@@ -23,11 +23,14 @@ FROM python:3.12-slim
 WORKDIR /app
 
 # Runtime system deps: FFmpeg for video, libsndfile for audio, libpq for PostgreSQL
+# fonts-thai-tlwg provides Thai glyphs for FFmpeg subtitle burn-in
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ffmpeg \
     libsndfile1 \
     libpq5 \
     curl \
+    fontconfig \
+    fonts-thai-tlwg \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy installed packages from builder

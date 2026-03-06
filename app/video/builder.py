@@ -70,6 +70,7 @@ def build_final_video(
             #   Outline=2     → black outline for readability on any background
             #   Shadow=1      → subtle drop shadow
             sub_style = (
+                f"FontName=Garuda,"
                 f"FontSize={settings.subtitle_font_size},"
                 f"PrimaryColour=&Hffffff&,"
                 f"OutlineColour=&H000000&,"
@@ -89,7 +90,7 @@ def build_final_video(
             if settings.use_gpu:
                 cmd_sub.extend(["-c:v", settings.ffmpeg_vcodec])
             else:
-                cmd_sub.extend(["-c:v", "libx264", "-preset", "fast"])
+                cmd_sub.extend(["-c:v", "libx264", "-preset", "ultrafast", "-threads", "1"])
             cmd_sub.extend(["-c:a", "copy", str(sub_output)])
 
             logger.info("Burning subtitles…")
@@ -140,7 +141,22 @@ def build_final_video(
 
 def _run_ffmpeg(cmd: list[str], timeout: int = 600) -> None:
     """Run an FFmpeg command and raise on failure."""
+    logger.info("FFmpeg cmd: %s", " ".join(cmd))
     proc = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
     if proc.returncode != 0:
-        logger.error("FFmpeg error: %s", proc.stderr[-500:])
-        raise RuntimeError(f"FFmpeg failed: {proc.stderr[-200:]}")
+        logger.error("FFmpeg FULL stderr:\n%s", proc.stderr)
+        # Filter noise, keep meaningful lines
+        err_lines = []
+        for line in proc.stderr.splitlines():
+            low = line.lower()
+            if any(skip in low for skip in [
+                "ffmpeg version", "built with", "configuration:", "--enable-",
+                "--disable-", "libavutil", "libavcodec", "libavformat",
+                "libavdevice", "libavfilter", "libswscale", "libswresample",
+                "libpostproc",
+            ]):
+                continue
+            if line.strip():
+                err_lines.append(line.strip())
+        err_summary = "\n".join(err_lines[-15:]) or proc.stderr[-500:]
+        raise RuntimeError(f"FFmpeg failed (rc={proc.returncode}): \n{err_summary}")
