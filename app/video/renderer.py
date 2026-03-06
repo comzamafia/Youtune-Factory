@@ -147,7 +147,11 @@ def render_scene(
     proc = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
     if proc.returncode != 0:
         logger.error("FFmpeg FULL stderr:\n%s", proc.stderr)
-        raise RuntimeError(f"FFmpeg render failed for {output_path.name}: {proc.stderr[-500:]}")
+        # Grab first 400 + last 400 chars to catch both the real error and context
+        err = proc.stderr
+        if len(err) > 850:
+            err = err[:400] + "\n...\n" + err[-400:]
+        raise RuntimeError(f"FFmpeg render failed for {output_path.name}: {err}")
 
     logger.info("Scene rendered: %s", output_path.name)
     return output_path
