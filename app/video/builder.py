@@ -142,7 +142,7 @@ def build_final_video(
 def _run_ffmpeg(cmd: list[str], timeout: int = 600) -> None:
     """Run an FFmpeg command and raise on failure."""
     logger.info("FFmpeg cmd: %s", " ".join(cmd))
-    proc = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+    proc = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, encoding="utf-8", errors="replace")
     if proc.returncode != 0:
         logger.error("FFmpeg FULL stderr:\n%s", proc.stderr)
         # Filter noise, keep meaningful lines

@@ -224,10 +224,13 @@ class OpenAIScriptGenerator(ScriptGeneratorBase):
 
         logger.info("Calling LLM: %s model=%s", self.api_base, self.model)
 
+        # Ollama may need extra time for model loading; Groq/cloud APIs are faster
+        read_timeout = 300 if "localhost" in self.api_base else 120
+
         for attempt in range(1, max_retries + 1):
             try:
                 async with httpx.AsyncClient(
-                    timeout=httpx.Timeout(connect=10, read=120, write=30, pool=10)
+                    timeout=httpx.Timeout(connect=10, read=read_timeout, write=30, pool=10)
                 ) as client:
                     resp = await client.post(
                         f"{self.api_base}/chat/completions",

@@ -153,7 +153,7 @@ def render_scene(
 
     # Scale timeout: 120s base + extra time for long scenes
     timeout = max(120, int((duration or 6.0) * 20))
-    proc = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+    proc = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, encoding="utf-8", errors="replace")
     if proc.returncode != 0:
         logger.error("FFmpeg FULL stderr:\n%s", proc.stderr)
         # Extract meaningful error lines (skip all noise, keep only errors/warnings)
