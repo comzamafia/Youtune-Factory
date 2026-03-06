@@ -1,0 +1,81 @@
+﻿2026-03-05 22:11:02,817 | INFO     | quick_test_thai | [SETUP] Setting up...
+2026-03-05 22:11:02,858 | INFO     | quick_test_thai | [INPUT] Reading novel from file: C:\AIYoutubeFactory\input\novels\α╣éα╕Ñα╕üα╣âα╕½α╕íα╣êα╣üα╕Ñα╕░α╕äα╕ºα╕▓α╕íα╕êα╕úα╕┤α╕çα╕¡α╕▒α╕Öα╣éα╕½α╕öα╕úα╣ëα╕▓α╕ó.txt
+2026-03-05 22:11:02,911 | INFO     | app.core.story_processor | Read novel file 'α╣éα╕Ñα╕üα╣âα╕½α╕íα╣êα╣üα╕Ñα╕░α╕äα╕ºα╕▓α╕íα╕êα╕úα╕┤α╕çα╕¡α╕▒α╕Öα╣éα╕½α╕öα╕úα╣ëα╕▓α╕ó.txt' (14065 chars, encoding=utf-8)
+2026-03-05 22:11:02,924 | INFO     | quick_test_thai | [OK] Novel: 'α╣éα╕Ñα╕üα╣âα╕½α╕íα╣êα╣üα╕Ñα╕░α╕äα╕ºα╕▓α╕íα╕êα╕úα╕┤α╕çα╕¡α╕▒α╕Öα╣éα╕½α╕öα╕úα╣ëα╕▓α╕ó' (14065 chars)
+2026-03-05 22:11:02,924 | INFO     | quick_test_thai | [LLM] Generating scenes with qwen3.5...
+2026-03-05 22:13:18,863 | INFO     | httpx | HTTP Request: POST http://localhost:11434/v1/chat/completions "HTTP/1.1 200 OK"
+2026-03-05 22:13:18,864 | INFO     | app.ai.script_generator | LLM response length: 0 chars (attempt 1/3)
+2026-03-05 22:13:18,864 | WARNING  | app.ai.script_generator | Empty or too-short LLM response on attempt 1, retrying...
+2026-03-05 22:15:12,640 | INFO     | httpx | HTTP Request: POST http://localhost:11434/v1/chat/completions "HTTP/1.1 200 OK"
+2026-03-05 22:15:12,641 | INFO     | app.ai.script_generator | LLM response length: 9247 chars (attempt 2/3)
+2026-03-05 22:15:12,641 | ERROR    | app.ai.script_generator | Failed to extract JSON. Raw content (first 500 chars): [
+  {
+    "scene_number": 1,
+    "text": "α╕½α╕Ñα╕╡α╣êα╣Çα╕½α╕íα╕óα╕Öα╕▒α╣êα╕çα╕üα╕┤α╕Öα╕£α╕▒α╕üα╕¬α╕öα╣åα╕ùα╕╡α╣êα╕¢α╕Ñα╕╣α╕üα╣äα╕öα╣ëα╕êα╕▓α╕üα╕ƒα╕▓α╕úα╣îα╕íα╕íα╕┤α╕òα╕┤α╕ƒα╕▓α╕úα╣îα╕íα╕Öα╕▒α╣ëα╕Ö α╕äα╕ºα╕▓α╕íα╕½α╕ºα╕▓α╕Öα╣üα╕Ñα╕░α╕¬α╕öα╕èα╕╖α╣êα╕Öα╕éα╕¡α╕çα╕£α╕▒α╕üα╕üα╣çα╕ùα╕│α╣âα╕½α╣ëα╣Çα╕ÿα╕¡α╕úα╕╣α╣ëα╕¬α╕╢α╕üα╕¬α╕Üα╕▓α╕óα╣âα╕êα╕éα╕╢α╣ëα╕Öα╕íα╕▓α╕ùα╕▒α╕Öα╕ùα╕╡ α╕üα╕Ñα╕┤α╣êα╕Öα╕½α╕¡α╕íα╕éα╕¡α╕çα╕£α╕▒α╕üα╕óα╕▒α╕çα╕èα╣êα╕ºα╕óα╕Üα╕│α╕Üα╕▒α╕öα╕¡α╕▓α╕üα╕▓α╕úα╕¢α╕ºα╕öα╕ùα╣ëα╕¡α╕çα╕éα╕¡α╕çα╣Çα╕ÿα╕¡α╣âα╕½α╣ëα╕½α╕▓α╕óα╣äα╕¢ α╕¬α╣êα╕ºα╕Öα╕Ñα╕╣α╕ü α╣å α╕üα╣çα╣Çα╕úα╕┤α╣êα╕íα╕íα╕╡α╕¡α╕▓α╕üα╕▓α╕úα╕öα╕╡α╕éα╕╢α╣ëα╕Ö α╕½α╕Ñα╕çα╕½α╕Ñα╕çα╕ùα╕╡α╣êα╣Çα╕₧α╕┤α╣êα╕çα╣Çα╕¢α╣çα╕Öα╣äα╕éα╣ë α╕òα╕¡α╕Öα╕Öα╕╡α╣ëα╕äα╕ºα╕▓α╕íα╣Çα╕êα╣çα╕Üα╕¢α╣êα╕ºα╕óα╕üα╣çα╕Ñα╕öα╕Ñα╕çα╣üα╕Ñα╣ëα╕º α╣üα╕Ñα╕░α╕ƒα╕▓α╕çα╕ƒα╕▓α╕çα╕ùα╕╡α╣êα╣Çα╕äα╕óα╕ïα╕╡α╕öα╣Çα╕ïα╕╡α╕óα╕º α╕üα╣çα╕üα╕Ñα╕▒α╕Üα╕íα╕╡α╕¬α╕╡α╕½α╕Öα╣ëα╕▓α╕¬α╕öα╣âα╕¬α╕éα╕╢α╣ëα╕Ö",
+    "image_prompt": "A woman sitting in a rustic, moonlit hut inside eating fresh green vegetables. Two young children are sleeping peacefully nearby on mats. Warm,
+2026-03-05 22:15:12,642 | WARNING  | app.ai.script_generator | Parse error on attempt 2: Could not extract JSON array from LLM response: [
+  {
+    "scene_number": 1,
+    "text": "α╕½α╕Ñα╕╡α╣êα╣Çα╕½α╕íα╕óα╕Öα╕▒α╣êα╕çα╕üα╕┤α╕Öα╕£α╕▒α╕üα╕¬α╕öα╣åα╕ùα╕╡α╣êα╕¢α╕Ñα╕╣α╕üα╣äα╕öα╣ëα╕êα╕▓α╕üα╕ƒα╕▓α╕úα╣îα╕íα╕íα╕┤α╕òα╕┤α╕ƒα╕▓α╕úα╣îα╕íα╕Öα╕▒α╣ëα╕Ö α╕äα╕ºα╕▓α╕íα╕½α╕ºα╕▓α╕Öα╣üα╕Ñα╕░α╕¬α╕öα╕èα╕╖α╣êα╕Öα╕éα╕¡α╕çα╕£α╕▒α╕üα╕üα╣çα╕ùα╕│α╣âα╕½α╣ëα╣Çα╕ÿα╕¡α╕úα╕╣α╣ëα╕¬α╕╢α╕üα╕¬α╕Üα╕▓α╕óα╣âα╕êα╕éα╕╢α╣ëα╕Öα╕íα╕▓α╕ùα╕▒α╕Öα╕ùα╕╡ α╕üα╕Ñα╕┤α╣êα╕Öα╕½α╕¡α╕íα╕éα╕¡α╕çα╕£α╕▒α╕üα╕óα╕▒α╕çα╕èα╣êα╕ºα╕óα╕Üα╕│α╕Üα╕▒α╕öα╕¡α╕▓α╕üα╕▓α╕úα╕¢α╕ºα╕öα╕ùα╣ëα╕¡α╕çα╕éα╕¡α╕çα╣Çα╕ÿα╕¡α╣âα╕½α╣ëα╕½..., retrying...
+2026-03-05 22:17:12,612 | INFO     | httpx | HTTP Request: POST http://localhost:11434/v1/chat/completions "HTTP/1.1 200 OK"
+2026-03-05 22:17:12,613 | INFO     | app.ai.script_generator | LLM response length: 2152 chars (attempt 3/3)
+2026-03-05 22:17:12,613 | INFO     | app.ai.script_generator | Generated 5 scenes for 'α╣éα╕Ñα╕üα╣âα╕½α╕íα╣êα╣üα╕Ñα╕░α╕äα╕ºα╕▓α╕íα╕êα╕úα╕┤α╕çα╕¡α╕▒α╕Öα╣éα╕½α╕öα╕úα╣ëα╕▓α╕ó'
+2026-03-05 22:17:12,627 | INFO     | app.core.story_processor | Processed novel 'α╣éα╕Ñα╕üα╣âα╕½α╕íα╣êα╣üα╕Ñα╕░α╕äα╕ºα╕▓α╕íα╕êα╕úα╕┤α╕çα╕¡α╕▒α╕Öα╣éα╕½α╕öα╕úα╣ëα╕▓α╕ó' -> 5 scenes (30.0 sec estimated)
+2026-03-05 22:17:12,627 | INFO     | quick_test_thai | [OK] 5 scenes generated in 369.7s
+2026-03-05 22:17:12,627 | INFO     | quick_test_thai |   Scene 1: Although hungry, Li Mei made her children eat first. She ate
+2026-03-05 22:17:12,627 | INFO     | quick_test_thai |   Scene 2: She hugged Fang Fang gently and stroked her hair, watching t
+2026-03-05 22:17:12,627 | INFO     | quick_test_thai |   Scene 3: From memories, Li Mei remembered a small market nearby. Deci
+2026-03-05 22:17:12,627 | INFO     | quick_test_thai |   Scene 4: Morning came. She stood up differently from usual. Looked at
+2026-03-05 22:17:12,627 | INFO     | quick_test_thai |   Scene 5: 'Mom... wait for me,' whispered softly. Stepped out to face 
+2026-03-05 22:17:12,627 | INFO     | quick_test_thai | [TTS] Generating voice with Edge TTS (th-TH-PremwadeeNeural)...
+2026-03-05 22:17:16,272 | INFO     | app.ai.voice_generator | Edge TTS (th-TH-PremwadeeNeural) ΓåÆ thai_scene_001.mp3
+2026-03-05 22:17:18,321 | INFO     | app.ai.voice_generator | Edge TTS (th-TH-PremwadeeNeural) ΓåÆ thai_scene_002.mp3
+2026-03-05 22:17:24,962 | INFO     | app.ai.voice_generator | Edge TTS (th-TH-PremwadeeNeural) ΓåÆ thai_scene_003.mp3
+2026-03-05 22:17:27,936 | INFO     | app.ai.voice_generator | Edge TTS (th-TH-PremwadeeNeural) ΓåÆ thai_scene_004.mp3
+2026-03-05 22:17:29,833 | INFO     | app.ai.voice_generator | Edge TTS (th-TH-PremwadeeNeural) ΓåÆ thai_scene_005.mp3
+2026-03-05 22:17:29,839 | INFO     | quick_test_thai | [OK] Voice generated for 5 scenes
+2026-03-05 22:17:29,839 | INFO     | quick_test_thai | [TIMING] Updating scene timing from audio durations...
+2026-03-05 22:17:29,867 | INFO     | app.core.story_processor | Updated scene timings from audio: 60.9 sec total
+2026-03-05 22:17:29,867 | INFO     | quick_test_thai | [IMG] Generating placeholder images...
+2026-03-05 22:17:30,401 | INFO     | app.ai.image_generator | Placeholder image ΓåÆ thai_scene_001.png
+2026-03-05 22:17:30,869 | INFO     | app.ai.image_generator | Placeholder image ΓåÆ thai_scene_002.png
+2026-03-05 22:17:31,335 | INFO     | app.ai.image_generator | Placeholder image ΓåÆ thai_scene_003.png
+2026-03-05 22:17:31,799 | INFO     | app.ai.image_generator | Placeholder image ΓåÆ thai_scene_004.png
+2026-03-05 22:17:32,274 | INFO     | app.ai.image_generator | Placeholder image ΓåÆ thai_scene_005.png
+2026-03-05 22:17:32,282 | INFO     | quick_test_thai | [OK] 5 images generated
+2026-03-05 22:17:32,282 | INFO     | quick_test_thai | [SUB] Generating subtitles (audio-based timing)...
+2026-03-05 22:17:32,285 | INFO     | app.ai.subtitle_generator | Audio-based subtitles -> thai_novel.srt (5 scenes, 60.9s total)
+2026-03-05 22:17:32,285 | INFO     | quick_test_thai | [OK] Subtitles -> thai_novel.srt
+2026-03-05 22:17:32,285 | INFO     | quick_test_thai | [RENDER] Rendering scene clips...
+2026-03-05 22:17:32,286 | INFO     | app.video.renderer | Rendering scene: thai_clip_001.mp4
+2026-03-05 22:17:32,939 | INFO     | app.video.renderer | Scene rendered: thai_clip_001.mp4
+2026-03-05 22:17:32,939 | INFO     | app.video.renderer | Rendering scene: thai_clip_002.mp4
+2026-03-05 22:17:33,391 | INFO     | app.video.renderer | Scene rendered: thai_clip_002.mp4
+2026-03-05 22:17:33,392 | INFO     | app.video.renderer | Rendering scene: thai_clip_003.mp4
+2026-03-05 22:17:34,205 | INFO     | app.video.renderer | Scene rendered: thai_clip_003.mp4
+2026-03-05 22:17:34,205 | INFO     | app.video.renderer | Rendering scene: thai_clip_004.mp4
+2026-03-05 22:17:34,645 | INFO     | app.video.renderer | Scene rendered: thai_clip_004.mp4
+2026-03-05 22:17:34,645 | INFO     | app.video.renderer | Rendering scene: thai_clip_005.mp4
+2026-03-05 22:17:34,919 | INFO     | app.video.renderer | Scene rendered: thai_clip_005.mp4
+2026-03-05 22:17:34,919 | INFO     | quick_test_thai | [OK] Rendered 5 clips
+2026-03-05 22:17:34,919 | INFO     | quick_test_thai | [BUILD] Building final video...
+2026-03-05 22:17:34,921 | INFO     | app.video.builder | Concatenating 5 clipsΓÇª
+2026-03-05 22:17:34,981 | INFO     | app.video.builder | Burning subtitlesΓÇª
+2026-03-05 22:17:40,660 | INFO     | app.video.builder | Final video ΓåÆ thai_novel.mp4
+
+=======================================================
+  QUICK TEST (THAI) - AI YouTube Novel Factory
+  Pipeline: Novel > Script > Voice > Image > Video
+=======================================================
+
+
+=======================================================
+  PIPELINE COMPLETE! (Thai Novel)
+=======================================================
+  Video:     C:\AIYoutubeFactory\output\video\thai_novel.mp4
+  Subtitles: C:\AIYoutubeFactory\processing\subtitles\thai_novel.srt
+  Scenes:    5
+  Duration:  60.9s (from audio)
+  Time:      397.8s
+=======================================================
+

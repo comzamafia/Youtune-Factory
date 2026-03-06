@@ -1,0 +1,3 @@
+﻿Length: 891
+First 300: '[\n  {\n    "scene_number": 1,\n    "text": "night sky dark.",\n    "image_prompt": "Cinematic wide shot of a pitch black night sky with faint twinkling stars, dense tree canopy visible below, minimal lighting, volumetric fog, photorealistic style",\n    "mood": "Eerie, mysterious"\n  },\n  {\n    "scene_nu'
+Last 200: 'ncient stone temple structure emerging from the forest mist at night, glowing faintly with ambient light, intricate carvings visible, cinematic composition",\n    "mood": "Awe-inspiring, magical"\n  }\n]'

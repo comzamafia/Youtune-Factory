@@ -1,0 +1,77 @@
+﻿2026-03-05 20:58:12,435 | INFO     | quick_test | [SETUP] Setting up directories and database...
+2026-03-05 20:58:12,489 | INFO     | quick_test | [OK] Novel created: 'The Cursed Temple' (id=9f652a03-147d-4e15-b30e-f69bd0e1b457)
+2026-03-05 20:58:12,489 | INFO     | quick_test | [LLM] Generating scenes with qwen3.5...
+2026-03-05 20:59:12,354 | INFO     | httpx | HTTP Request: POST http://localhost:11434/v1/chat/completions "HTTP/1.1 200 OK"
+2026-03-05 20:59:12,355 | INFO     | app.ai.script_generator | LLM response length: 3214 chars
+2026-03-05 20:59:12,355 | INFO     | app.ai.script_generator | Generated 10 scenes for 'The Cursed Temple'
+2026-03-05 20:59:12,367 | INFO     | app.core.story_processor | Processed novel 'The Cursed Temple' ΓåÆ 10 scenes (60.0 sec total)
+2026-03-05 20:59:12,367 | INFO     | quick_test | [OK] 10 scenes generated in 59.9s
+2026-03-05 20:59:12,367 | INFO     | quick_test | [TTS] Generating voice with Edge TTS (th-TH-PremwadeeNeural)...
+2026-03-05 20:59:13,047 | INFO     | app.ai.voice_generator | Edge TTS (th-TH-PremwadeeNeural) ΓåÆ scene_001.mp3
+2026-03-05 20:59:13,604 | INFO     | app.ai.voice_generator | Edge TTS (th-TH-PremwadeeNeural) ΓåÆ scene_002.mp3
+2026-03-05 20:59:14,155 | INFO     | app.ai.voice_generator | Edge TTS (th-TH-PremwadeeNeural) ΓåÆ scene_003.mp3
+2026-03-05 20:59:14,658 | INFO     | app.ai.voice_generator | Edge TTS (th-TH-PremwadeeNeural) ΓåÆ scene_004.mp3
+2026-03-05 20:59:15,152 | INFO     | app.ai.voice_generator | Edge TTS (th-TH-PremwadeeNeural) ΓåÆ scene_005.mp3
+2026-03-05 20:59:15,632 | INFO     | app.ai.voice_generator | Edge TTS (th-TH-PremwadeeNeural) ΓåÆ scene_006.mp3
+2026-03-05 20:59:16,143 | INFO     | app.ai.voice_generator | Edge TTS (th-TH-PremwadeeNeural) ΓåÆ scene_007.mp3
+2026-03-05 20:59:16,630 | INFO     | app.ai.voice_generator | Edge TTS (th-TH-PremwadeeNeural) ΓåÆ scene_008.mp3
+2026-03-05 20:59:17,098 | INFO     | app.ai.voice_generator | Edge TTS (th-TH-PremwadeeNeural) ΓåÆ scene_009.mp3
+2026-03-05 20:59:17,656 | INFO     | app.ai.voice_generator | Edge TTS (th-TH-PremwadeeNeural) ΓåÆ scene_010.mp3
+2026-03-05 20:59:17,665 | INFO     | quick_test | [OK] Voice generated for 10 scenes
+2026-03-05 20:59:17,665 | INFO     | quick_test | [IMG] Generating placeholder images...
+2026-03-05 20:59:18,161 | INFO     | app.ai.image_generator | Placeholder image ΓåÆ scene_001.png
+2026-03-05 20:59:18,639 | INFO     | app.ai.image_generator | Placeholder image ΓåÆ scene_002.png
+2026-03-05 20:59:19,105 | INFO     | app.ai.image_generator | Placeholder image ΓåÆ scene_003.png
+2026-03-05 20:59:19,585 | INFO     | app.ai.image_generator | Placeholder image ΓåÆ scene_004.png
+2026-03-05 20:59:20,068 | INFO     | app.ai.image_generator | Placeholder image ΓåÆ scene_005.png
+2026-03-05 20:59:20,556 | INFO     | app.ai.image_generator | Placeholder image ΓåÆ scene_006.png
+2026-03-05 20:59:21,042 | INFO     | app.ai.image_generator | Placeholder image ΓåÆ scene_007.png
+2026-03-05 20:59:21,518 | INFO     | app.ai.image_generator | Placeholder image ΓåÆ scene_008.png
+2026-03-05 20:59:22,003 | INFO     | app.ai.image_generator | Placeholder image ΓåÆ scene_009.png
+2026-03-05 20:59:22,490 | INFO     | app.ai.image_generator | Placeholder image ΓåÆ scene_010.png
+2026-03-05 20:59:22,499 | INFO     | quick_test | [OK] Images generated for 10 scenes
+2026-03-05 20:59:22,499 | INFO     | quick_test | [SUB] Generating subtitles...
+2026-03-05 20:59:22,502 | INFO     | app.ai.subtitle_generator | Text-based subtitles ΓåÆ The_Cursed_Temple.srt (10 scenes)
+2026-03-05 20:59:22,502 | INFO     | quick_test | [OK] Subtitles -> The_Cursed_Temple.srt
+2026-03-05 20:59:22,503 | INFO     | quick_test | [RENDER] Rendering scene clips with FFmpeg...
+2026-03-05 20:59:22,504 | INFO     | app.video.renderer | Rendering scene: clip_001.mp4
+2026-03-05 20:59:22,806 | INFO     | app.video.renderer | Scene rendered: clip_001.mp4
+2026-03-05 20:59:22,806 | INFO     | app.video.renderer | Rendering scene: clip_002.mp4
+2026-03-05 20:59:23,084 | INFO     | app.video.renderer | Scene rendered: clip_002.mp4
+2026-03-05 20:59:23,084 | INFO     | app.video.renderer | Rendering scene: clip_003.mp4
+2026-03-05 20:59:23,373 | INFO     | app.video.renderer | Scene rendered: clip_003.mp4
+2026-03-05 20:59:23,374 | INFO     | app.video.renderer | Rendering scene: clip_004.mp4
+2026-03-05 20:59:23,646 | INFO     | app.video.renderer | Scene rendered: clip_004.mp4
+2026-03-05 20:59:23,646 | INFO     | app.video.renderer | Rendering scene: clip_005.mp4
+2026-03-05 20:59:23,909 | INFO     | app.video.renderer | Scene rendered: clip_005.mp4
+2026-03-05 20:59:23,909 | INFO     | app.video.renderer | Rendering scene: clip_006.mp4
+2026-03-05 20:59:24,202 | INFO     | app.video.renderer | Scene rendered: clip_006.mp4
+2026-03-05 20:59:24,202 | INFO     | app.video.renderer | Rendering scene: clip_007.mp4
+2026-03-05 20:59:24,484 | INFO     | app.video.renderer | Scene rendered: clip_007.mp4
+2026-03-05 20:59:24,484 | INFO     | app.video.renderer | Rendering scene: clip_008.mp4
+2026-03-05 20:59:24,767 | INFO     | app.video.renderer | Scene rendered: clip_008.mp4
+2026-03-05 20:59:24,767 | INFO     | app.video.renderer | Rendering scene: clip_009.mp4
+2026-03-05 20:59:25,047 | INFO     | app.video.renderer | Scene rendered: clip_009.mp4
+2026-03-05 20:59:25,047 | INFO     | app.video.renderer | Rendering scene: clip_010.mp4
+2026-03-05 20:59:25,324 | INFO     | app.video.renderer | Scene rendered: clip_010.mp4
+2026-03-05 20:59:25,330 | INFO     | quick_test | [OK] Rendered 10 scene clips
+2026-03-05 20:59:25,330 | INFO     | quick_test | [BUILD] Building final video...
+2026-03-05 20:59:25,334 | INFO     | app.video.builder | Concatenating 10 clipsΓÇª
+2026-03-05 20:59:25,411 | INFO     | app.video.builder | Burning subtitlesΓÇª
+2026-03-05 20:59:27,299 | INFO     | app.video.builder | Final video ΓåÆ The_Cursed_Temple.mp4
+
+=======================================================
+  QUICK TEST MODE - AI YouTube Novel Factory
+  Pipeline: Novel > Script > Voice > Image > Video
+=======================================================
+
+
+=======================================================
+  PIPELINE COMPLETE!
+=======================================================
+  Video:     C:\AIYoutubeFactory\output\video\The_Cursed_Temple.mp4
+  Subtitles: C:\AIYoutubeFactory\processing\subtitles\The_Cursed_Temple.srt
+  Scenes:    10
+  Time:      74.8s
+=======================================================
+

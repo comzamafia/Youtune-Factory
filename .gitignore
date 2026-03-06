@@ -1,0 +1,49 @@
+# Byte-compiled
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+venv/
+.venv/
+env/
+
+# Environment variables — NEVER commit real .env
+.env
+*.env.local
+*.env.production
+
+# IDE
+.vscode/
+.idea/
+
+# Processing / output (generated files — large, runtime-only)
+processing/scenes/*.mp4
+processing/scenes/*.png
+processing/voice/*.wav
+processing/voice/*.mp3
+processing/subtitles/*.srt
+output/video/*.mp4
+output/thumbnail/*.jpg
+output/thumbnail/*.png
+
+# YouTube credentials — SENSITIVE, never commit
+client_secret.json
+youtube_credentials.json
+
+# Alembic Beat schedule (runtime state)
+beat/celerybeat-schedule
+celerybeat-schedule.db
+
+# Test databases
+test_*.db
+*.sqlite3
+*.db
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Logs
+*.log
+

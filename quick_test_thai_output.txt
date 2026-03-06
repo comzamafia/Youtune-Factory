@@ -1,0 +1,106 @@
+﻿2026-03-05 21:33:10,659 | INFO     | quick_test_thai | [SETUP] Setting up...
+2026-03-05 21:33:10,703 | INFO     | quick_test_thai | [INPUT] Using built-in Thai sample novel
+2026-03-05 21:33:10,714 | INFO     | quick_test_thai | [OK] Novel: 'α╕ºα╕┤α╕½α╕▓α╕úα╣üα╕½α╣êα╕çα╕äα╕│α╕¬α╕▓α╕¢' (595 chars)
+2026-03-05 21:33:10,714 | INFO     | quick_test_thai | [LLM] Generating scenes with qwen3.5...
+2026-03-05 21:35:20,076 | INFO     | httpx | HTTP Request: POST http://localhost:11434/v1/chat/completions "HTTP/1.1 200 OK"
+2026-03-05 21:35:20,077 | INFO     | app.ai.script_generator | LLM response length: 2662 chars (attempt 1/3)
+2026-03-05 21:35:20,077 | INFO     | app.ai.script_generator | Generated 13 scenes for 'α╕ºα╕┤α╕½α╕▓α╕úα╣üα╕½α╣êα╕çα╕äα╕│α╕¬α╕▓α╕¢'
+2026-03-05 21:35:20,094 | INFO     | app.core.story_processor | Processed novel 'α╕ºα╕┤α╕½α╕▓α╕úα╣üα╕½α╣êα╕çα╕äα╕│α╕¬α╕▓α╕¢' -> 13 scenes (78.0 sec estimated)
+2026-03-05 21:35:20,094 | INFO     | quick_test_thai | [OK] 13 scenes generated in 129.4s
+2026-03-05 21:35:20,094 | INFO     | quick_test_thai |   Scene 1: α╕äα╕╖α╕Öα╕Öα╕▒α╣ëα╕▒α╕Öα╕ùα╣ëα╕¡α╕çα╕ƒα╣ëα╕▓α╕íα╕╖α╕öα╕¬α╕Öα╕┤α╕ù α╕öα╕ºα╕çα╕êα╕▒α╕Öα╕ùα╕úα╣îα╕ûα╕╣α╕üα╣Çα╕íα╕åα╕½α╕Öα╕▓α╕Üα╕öα╕Üα╕▒α╕ç
+2026-03-05 21:35:20,094 | INFO     | quick_test_thai |   Scene 2: α╕èα╕▓α╕óα╕½α╕Öα╕╕α╣êα╕íα╕Öα╕▓α╕íα╕ºα╣êα╕▓ "α╕¬α╕íα╕èα╕▓α╕ó" α╣Çα╕öα╕┤α╕Öα╕Ñα╕▒α╕öα╣Çα╕Ñα╕▓α╕░α╣äα╕¢α╕òα╕▓α╕íα╕ùα╕▓α╕çα╣âα╕Öα╕¢α╣êα╕▓α╕Ñα╕╢α╕ü
+2026-03-05 21:35:20,094 | INFO     | quick_test_thai |   Scene 3: α╣Çα╕éα╕▓α╕ûα╕╖α╕¡α╕òα╕░α╣Çα╕üα╕╡α╕óα╕çα╕öα╕ºα╕çα╣Çα╕üα╣êα╕▓α╕ùα╕╡α╣êα╕¬α╣êα╕¡α╕çα╣üα╕¬α╕çα╕¬α╕╡α╕ƒα╣ëα╕▓α╕¢α╕úα╕░α╕½α╕Ñα╕▓α╕ö
+2026-03-05 21:35:20,094 | INFO     | quick_test_thai |   Scene 4: α╣Çα╕¬α╕╡α╕óα╕Üα╕Ñα╕íα╕½α╕ºα╕╡α╕öα╕½α╕ºα╕┤α╕ºα╕£α╣êα╕▓α╕Öα╕òα╣ëα╕Öα╣äα╕íα╣ëα╣âα╕½α╕ìα╣êα╕ºα╕▓α╕ºα╕üα╕▒α╕Üα╕íα╕╡α╣âα╕äα╕úα╕üα╕úα╕░α╕ïα╕┤α╕Üα╣Çα╕úα╕╡α╕óα╕º
+2026-03-05 21:35:20,094 | INFO     | quick_test_thai |   Scene 5: α╕ùα╕▒α╕Öα╣âα╕öα╕Öα╕▒α╣ëα╕▒α╕Öα╣Çα╕éα╕▓α╕üα╣çα╕íα╕▓α╕ûα╕╢α╕çα╕ºα╕┤α╕½α╕▓α╕úα╕úα╣ëα╕▓α╕çα╕ùα╕╡α╣êα╕ïα╣êα╕¡α╕Öα╕¡α╕óα╕╣α╣êα╕üα╕Ñα╕▓α╕çα╕¢α╣êα╕▓
+2026-03-05 21:35:20,094 | INFO     | quick_test_thai |   Scene 6: α╕£α╕Öα╕▒α╕çα╕½α╕┤α╕Öα╣Çα╕üα╣êα╕▓α╣üα╕üα╣êα╕¢α╕üα╕äα╕Ñα╕╕α╕íα╕öα╣ëα╕ºα╕óα╣Çα╕ûα╕▓α╕ºα╣îα╕Ñα╕óα╣îα╣üα╕Ñα╕░α╕òα╕░α╣äα╕äα╕úα╣êα╕Öα╣ëα╕│
+2026-03-05 21:35:20,094 | INFO     | quick_test_thai |   Scene 7: α╕½α╕íα╕öα╕óα╕▓α╕íα╕öα╣êα╕│α╣üα╕Ñα╣ëα╕º α╣Çα╕éα╕▓α╕£α╕Ñα╕▒α╕üα╕¢α╕úα╕░α╕òα╕╣α╕½α╕┤α╕Öα╕½α╕Öα╕▒α╕üα╣Çα╕éα╣ëα╕▓α╕Öα╕▓α╣Çα╕éα╣ëα╕▓
+2026-03-05 21:35:20,094 | INFO     | quick_test_thai |   Scene 8: α╕½α╣ëα╕¡α╕çα╣éα╕ûα╕çα╕üα╕ºα╣ëα╕▓α╕çα╣âα╕½α╕ìα╣êα╣Çα╕¢α╕┤α╕öα╕üα╕ºα╣ëα╕▓α╕çα╕òα╣êα╕¡α╕Öα╣ëα╕▓α╣Çα╕éα╕▓ α╕úα╕▓α╕óα╕Ñα╣ëα╕¡α╕íα╕öα╣ëα╕ºα╕óα╣üα╕¬α╕çα╕ùα╕¡α╕çα╕êα╕▓α╕üα╣üα╕½α╕Ñα╣êα╕ç
+2026-03-05 21:35:20,094 | INFO     | quick_test_thai |   Scene 9: α╕òα╕úα╕çα╕üα╕Ñα╕▓α╕çα╕½α╣ëα╕¡α╕çα╕íα╕╡α╣üα╕ùα╣êα╕Öα╕äα╕úα╕┤α╕¬α╕òα╕▒α╕Ñα╕ºα╕▓α╕çα╕¡α╕▒α╕ìα╕íα╕ôα╕╡α╕¬α╕╡α╣üα╕öα╕çα╣Çα╕úα╕╖α╕¡α╕çα╣üα╕¬α╕ç
+2026-03-05 21:35:20,094 | INFO     | quick_test_thai |   Scene 10: α╣Çα╕íα╕╖α╣êα╣êα╕¡α╣Çα╕éα╕▓α╣Çα╕¡α╕╖α╣ëα╕¡α╕íα╕íα╕╖α╕¡α╣äα╕¢α╕½α╕óα╕┤α╕Ü
+2026-03-05 21:35:20,094 | INFO     | quick_test_thai |   Scene 11: α╣Çα╕¬α╕╡α╕óα╕çα╕üα╕úα╕░α╕ïα╕┤α╕Üα╕öα╕▒α╕çα╕üα╕╢α╣ëα╕éα╕╢α╣ëα╕Öα╕ùα╕▒α╣êα╕ºα╕½α╣ëα╕¡α╕ç α╣Çα╕òα╕╖α╕¡α╕Öα╣Çα╕úα╕╖α╣êα╕¡α╕çα╕äα╕│α╕¬α╕▓α╕¢
+2026-03-05 21:35:20,094 | INFO     | quick_test_thai |   Scene 12: α╣üα╕òα╣êα╕¬α╕íα╕èα╕▓α╕óα╕óα╕┤α╣ëα╕í α╣Çα╕éα╕▓α╕íα╕▓α╣äα╕üα╕Ñα╣Çα╕üα╕┤α╕Öα╕üα╕ºα╣êα╕▓α╕êα╕░α╕½α╕▒α╕Öα╕½α╕Ñα╕▒α╕çα╕üα╕Ñα╕▒α╕Üα╣üα╕Ñα╣ëα╕º
+2026-03-05 21:35:20,094 | INFO     | quick_test_thai |   Scene 13: α╣Çα╕éα╕▓α╕äα╕ºα╣ëα╕▓α╕¡α╕▒α╕ìα╕íα╕ôα╕╡ α╣üα╕Ñα╕░α╕ºα╕┤α╕½α╕▓α╕úα╕üα╣çα╣Çα╕úα╕┤α╣êα╕íα╕¬α╕▒α╣êα╕Öα╕¬α╕░α╣Çα╕ùα╕╖α╕¡α╕Ö
+2026-03-05 21:35:20,094 | INFO     | quick_test_thai | [TTS] Generating voice with Edge TTS (th-TH-PremwadeeNeural)...
+2026-03-05 21:35:21,252 | INFO     | app.ai.voice_generator | Edge TTS (th-TH-PremwadeeNeural) ΓåÆ thai_scene_001.mp3
+2026-03-05 21:35:22,504 | INFO     | app.ai.voice_generator | Edge TTS (th-TH-PremwadeeNeural) ΓåÆ thai_scene_002.mp3
+2026-03-05 21:35:22,962 | INFO     | app.ai.voice_generator | Edge TTS (th-TH-PremwadeeNeural) ΓåÆ thai_scene_003.mp3
+2026-03-05 21:35:24,259 | INFO     | app.ai.voice_generator | Edge TTS (th-TH-PremwadeeNeural) ΓåÆ thai_scene_004.mp3
+2026-03-05 21:35:25,452 | INFO     | app.ai.voice_generator | Edge TTS (th-TH-PremwadeeNeural) ΓåÆ thai_scene_005.mp3
+2026-03-05 21:35:26,640 | INFO     | app.ai.voice_generator | Edge TTS (th-TH-PremwadeeNeural) ΓåÆ thai_scene_006.mp3
+2026-03-05 21:35:27,816 | INFO     | app.ai.voice_generator | Edge TTS (th-TH-PremwadeeNeural) ΓåÆ thai_scene_007.mp3
+2026-03-05 21:35:29,241 | INFO     | app.ai.voice_generator | Edge TTS (th-TH-PremwadeeNeural) ΓåÆ thai_scene_008.mp3
+2026-03-05 21:35:29,783 | INFO     | app.ai.voice_generator | Edge TTS (th-TH-PremwadeeNeural) ΓåÆ thai_scene_009.mp3
+2026-03-05 21:35:30,667 | INFO     | app.ai.voice_generator | Edge TTS (th-TH-PremwadeeNeural) ΓåÆ thai_scene_010.mp3
+2026-03-05 21:35:31,822 | INFO     | app.ai.voice_generator | Edge TTS (th-TH-PremwadeeNeural) ΓåÆ thai_scene_011.mp3
+2026-03-05 21:35:32,275 | INFO     | app.ai.voice_generator | Edge TTS (th-TH-PremwadeeNeural) ΓåÆ thai_scene_012.mp3
+2026-03-05 21:35:32,797 | INFO     | app.ai.voice_generator | Edge TTS (th-TH-PremwadeeNeural) ΓåÆ thai_scene_013.mp3
+2026-03-05 21:35:32,804 | INFO     | quick_test_thai | [OK] Voice generated for 13 scenes
+2026-03-05 21:35:32,804 | INFO     | quick_test_thai | [TIMING] Updating scene timing from audio durations...
+2026-03-05 21:35:32,866 | INFO     | app.core.story_processor | Updated scene timings from audio: 51.3 sec total
+2026-03-05 21:35:32,866 | INFO     | quick_test_thai | [IMG] Generating placeholder images...
+2026-03-05 21:35:33,377 | INFO     | app.ai.image_generator | Placeholder image ΓåÆ thai_scene_001.png
+2026-03-05 21:35:33,879 | INFO     | app.ai.image_generator | Placeholder image ΓåÆ thai_scene_002.png
+2026-03-05 21:35:34,368 | INFO     | app.ai.image_generator | Placeholder image ΓåÆ thai_scene_003.png
+2026-03-05 21:35:34,868 | INFO     | app.ai.image_generator | Placeholder image ΓåÆ thai_scene_004.png
+2026-03-05 21:35:35,366 | INFO     | app.ai.image_generator | Placeholder image ΓåÆ thai_scene_005.png
+2026-03-05 21:35:35,863 | INFO     | app.ai.image_generator | Placeholder image ΓåÆ thai_scene_006.png
+2026-03-05 21:35:36,361 | INFO     | app.ai.image_generator | Placeholder image ΓåÆ thai_scene_007.png
+2026-03-05 21:35:36,855 | INFO     | app.ai.image_generator | Placeholder image ΓåÆ thai_scene_008.png
+2026-03-05 21:35:37,352 | INFO     | app.ai.image_generator | Placeholder image ΓåÆ thai_scene_009.png
+2026-03-05 21:35:37,848 | INFO     | app.ai.image_generator | Placeholder image ΓåÆ thai_scene_010.png
+2026-03-05 21:35:38,340 | INFO     | app.ai.image_generator | Placeholder image ΓåÆ thai_scene_011.png
+2026-03-05 21:35:38,838 | INFO     | app.ai.image_generator | Placeholder image ΓåÆ thai_scene_012.png
+2026-03-05 21:35:39,331 | INFO     | app.ai.image_generator | Placeholder image ΓåÆ thai_scene_013.png
+2026-03-05 21:35:39,337 | INFO     | quick_test_thai | [OK] 13 images generated
+2026-03-05 21:35:39,337 | INFO     | quick_test_thai | [SUB] Generating subtitles (audio-based timing)...
+2026-03-05 21:35:39,343 | INFO     | app.ai.subtitle_generator | Audio-based subtitles -> thai_novel.srt (13 scenes, 51.3s total)
+2026-03-05 21:35:39,343 | INFO     | quick_test_thai | [OK] Subtitles -> thai_novel.srt
+2026-03-05 21:35:39,343 | INFO     | quick_test_thai | [RENDER] Rendering scene clips...
+2026-03-05 21:35:39,344 | INFO     | app.video.renderer | Rendering scene: thai_clip_001.mp4
+2026-03-05 21:35:39,593 | INFO     | app.video.renderer | Scene rendered: thai_clip_001.mp4
+2026-03-05 21:35:39,593 | INFO     | app.video.renderer | Rendering scene: thai_clip_002.mp4
+2026-03-05 21:35:39,853 | INFO     | app.video.renderer | Scene rendered: thai_clip_002.mp4
+2026-03-05 21:35:39,854 | INFO     | app.video.renderer | Rendering scene: thai_clip_003.mp4
+2026-03-05 21:35:40,083 | INFO     | app.video.renderer | Scene rendered: thai_clip_003.mp4
+2026-03-05 21:35:40,084 | INFO     | app.video.renderer | Rendering scene: thai_clip_004.mp4
+2026-03-05 21:35:40,325 | INFO     | app.video.renderer | Scene rendered: thai_clip_004.mp4
+2026-03-05 21:35:40,326 | INFO     | app.video.renderer | Rendering scene: thai_clip_005.mp4
+2026-03-05 21:35:40,561 | INFO     | app.video.renderer | Scene rendered: thai_clip_005.mp4
+2026-03-05 21:35:40,561 | INFO     | app.video.renderer | Rendering scene: thai_clip_006.mp4
+2026-03-05 21:35:40,776 | INFO     | app.video.renderer | Scene rendered: thai_clip_006.mp4
+2026-03-05 21:35:40,777 | INFO     | app.video.renderer | Rendering scene: thai_clip_007.mp4
+2026-03-05 21:35:40,995 | INFO     | app.video.renderer | Scene rendered: thai_clip_007.mp4
+2026-03-05 21:35:40,995 | INFO     | app.video.renderer | Rendering scene: thai_clip_008.mp4
+2026-03-05 21:35:41,260 | INFO     | app.video.renderer | Scene rendered: thai_clip_008.mp4
+2026-03-05 21:35:41,260 | INFO     | app.video.renderer | Rendering scene: thai_clip_009.mp4
+2026-03-05 21:35:41,495 | INFO     | app.video.renderer | Scene rendered: thai_clip_009.mp4
+2026-03-05 21:35:41,496 | INFO     | app.video.renderer | Rendering scene: thai_clip_010.mp4
+2026-03-05 21:35:41,668 | INFO     | app.video.renderer | Scene rendered: thai_clip_010.mp4
+2026-03-05 21:35:41,668 | INFO     | app.video.renderer | Rendering scene: thai_clip_011.mp4
+2026-03-05 21:35:41,888 | INFO     | app.video.renderer | Scene rendered: thai_clip_011.mp4
+2026-03-05 21:35:41,889 | INFO     | app.video.renderer | Rendering scene: thai_clip_012.mp4
+2026-03-05 21:35:42,127 | INFO     | app.video.renderer | Scene rendered: thai_clip_012.mp4
+2026-03-05 21:35:42,127 | INFO     | app.video.renderer | Rendering scene: thai_clip_013.mp4
+2026-03-05 21:35:42,350 | INFO     | app.video.renderer | Scene rendered: thai_clip_013.mp4
+2026-03-05 21:35:42,350 | INFO     | quick_test_thai | [OK] Rendered 13 clips
+2026-03-05 21:35:42,350 | INFO     | quick_test_thai | [BUILD] Building final video...
+2026-03-05 21:35:42,353 | INFO     | app.video.builder | Concatenating 13 clipsΓÇª
+2026-03-05 21:35:42,430 | INFO     | app.video.builder | Burning subtitlesΓÇª
+2026-03-05 21:35:43,731 | INFO     | app.video.builder | Final video ΓåÆ thai_novel.mp4
+
+=======================================================
+  QUICK TEST (THAI) - AI YouTube Novel Factory
+  Pipeline: Novel > Script > Voice > Image > Video
+=======================================================
+
+
+=======================================================
+  PIPELINE COMPLETE! (Thai Novel)
+=======================================================
+  Video:     C:\AIYoutubeFactory\output\video\thai_novel.mp4
+  Subtitles: C:\AIYoutubeFactory\processing\subtitles\thai_novel.srt
+  Scenes:    13
+  Duration:  51.3s (from audio)
+  Time:      153.0s
+=======================================================
+

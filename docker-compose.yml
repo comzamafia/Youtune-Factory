@@ -1,0 +1,246 @@
+# ─────────────────────────────────────────────────────────────────────
+# AI YouTube Novel Factory — Full Stack
+#
+# External AI services (Ollama + Stable Diffusion) run as separate
+# containers so they can be started independently or on GPU machines.
+#
+# Quick start:
+#   docker compose up -d
+#   docker compose logs -f api
+# ─────────────────────────────────────────────────────────────────────
+
+services:
+  # ── PostgreSQL ───────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: aiyoutube
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./database/migrations:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Redis (with persistence) ─────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: >
+      redis-server
+      --appendonly yes
+      --appendfsync everysec
+      --save 900 1
+      --save 300 10
+      --save 60 10000
+      --maxmemory 2gb
+      --maxmemory-policy allkeys-lru
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # ── Ollama (Local LLM) ───────────────────────────────────────────────
+  # Serves Qwen3.5 / other models via OpenAI-compatible API on :11434
+  ollama:
+    image: ollama/ollama:latest
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollamadata:/root/.ollama
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:11434/api/tags || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ── Stable Diffusion WebUI (Automatic1111) ───────────────────────────
+  # Exposes /sdapi/v1/txt2img on :7860
+  stable-diffusion:
+    image: universonic/stable-diffusion-webui:latest
+    restart: unless-stopped
+    ports:
+      - "7860:7860"
+    volumes:
+      - sdmodels:/app/models
+      - sdoutputs:/app/outputs
+    environment:
+      - CLI_ARGS=--api --listen --no-half-vae --xformers
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:7860/sdapi/v1/samplers || exit 1"]
+      interval: 30s
+      timeout: 15s
+      retries: 5
+
+  # ── FastAPI Server ───────────────────────────────────────────────────
+  api:
+    build: .
+    restart: unless-stopped
+    command: python main.py --host 0.0.0.0 --port 8000
+    ports:
+      - "8000:8000"
+    env_file: .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./input:/app/input
+      - ./assets:/app/assets
+      - ./processing:/app/processing
+      - ./output:/app/output
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8000/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  # ── Celery Worker: Script (LLM) ──────────────────────────────────────
+  worker-script:
+    build: .
+    restart: unless-stopped
+    command: celery -A app.core.celery_app worker -Q script -n script@%h --loglevel=info --concurrency=2 --max-tasks-per-child=50
+    env_file: .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./input:/app/input
+
+  # ── Celery Worker: TTS ───────────────────────────────────────────────
+  worker-tts:
+    build: .
+    restart: unless-stopped
+    command: celery -A app.core.celery_app worker -Q tts -n tts@%h --loglevel=info --concurrency=4 --max-tasks-per-child=100
+    env_file: .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./processing/voice:/app/processing/voice
+
+  # ── Celery Worker: Image (GPU — low concurrency) ─────────────────────
+  worker-image:
+    build: .
+    restart: unless-stopped
+    # concurrency=2 prevents GPU OOM; raise if you have >24 GB VRAM
+    command: celery -A app.core.celery_app worker -Q image -n image@%h --loglevel=info --concurrency=2 --max-tasks-per-child=50
+    env_file: .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./processing/scenes:/app/processing/scenes
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+  # ── Celery Worker: Video (FFmpeg) ────────────────────────────────────
+  worker-video:
+    build: .
+    restart: unless-stopped
+    # concurrency=1 avoids FFmpeg competing for CPU/GPU bandwidth
+    command: celery -A app.core.celery_app worker -Q video -n video@%h --loglevel=info --concurrency=1 --max-tasks-per-child=10
+    env_file: .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./processing:/app/processing
+      - ./output:/app/output
+      - ./assets:/app/assets
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+  # ── Celery Worker: Upload ────────────────────────────────────────────
+  worker-upload:
+    build: .
+    restart: unless-stopped
+    command: celery -A app.core.celery_app worker -Q upload -n upload@%h --loglevel=info --concurrency=1 --max-tasks-per-child=20
+    env_file: .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./output:/app/output
+
+  # ── Celery Beat (Scheduler) ──────────────────────────────────────────
+  celery-beat:
+    build: .
+    restart: unless-stopped
+    command: celery -A app.core.celery_app beat --loglevel=info --scheduler celery.beat:PersistentScheduler
+    env_file: .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - beatschedule:/app/beat
+
+  # ── Flower (Celery Monitoring UI) ────────────────────────────────────
+  flower:
+    build: .
+    restart: unless-stopped
+    command: celery -A app.core.celery_app flower --port=5555 --basic_auth=${FLOWER_USER:-admin}:${FLOWER_PASSWORD:-admin}
+    ports:
+      - "5555:5555"
+    env_file: .env
+    depends_on:
+      - redis
+
+volumes:
+  pgdata:
+  redisdata:
+  ollamadata:
+  sdmodels:
+  sdoutputs:
+  beatschedule:
+

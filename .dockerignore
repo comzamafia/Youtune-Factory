@@ -1,0 +1,47 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+*.egg-info/
+.eggs/
+dist/
+build/
+
+# Testing
+.pytest_cache/
+*.db
+test_*.db
+
+# Development
+.env
+*.env.local
+.git/
+.gitignore
+
+# Secrets (NEVER include in image)
+client_secret.json
+youtube_credentials.json
+*.key
+*.pem
+
+# Large data files (mounted as volumes at runtime)
+input/novels/*.txt
+processing/scenes/
+processing/voice/
+processing/subtitles/
+output/video/
+output/thumbnail/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
