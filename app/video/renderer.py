@@ -84,9 +84,9 @@ def _build_ffmpeg_video_cmd(
     if settings.use_gpu:
         cmd.extend(["-c:v", settings.ffmpeg_vcodec])
     else:
-        cmd.extend(["-c:v", "libx264", "-preset", "fast"])
+        cmd.extend(["-c:v", "libx264", "-preset", "ultrafast", "-threads", "1"])
 
-    cmd.extend(["-c:a", "aac", "-b:a", "192k", "-pix_fmt", "yuv420p"])
+    cmd.extend(["-c:a", "aac", "-b:a", "128k", "-ar", "44100", "-pix_fmt", "yuv420p"])
 
     # Scale and pad to configured output dimensions (default 1080×1920 = 9:16 vertical)
     vf = (
