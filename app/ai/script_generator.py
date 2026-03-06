@@ -216,9 +216,13 @@ class OpenAIScriptGenerator(ScriptGeneratorBase):
         max_retries = 3
         last_error: Exception | None = None
 
+        logger.info("Calling LLM: %s model=%s", self.api_base, self.model)
+
         for attempt in range(1, max_retries + 1):
             try:
-                async with httpx.AsyncClient(timeout=300) as client:
+                async with httpx.AsyncClient(
+                    timeout=httpx.Timeout(connect=10, read=120, write=30, pool=10)
+                ) as client:
                     resp = await client.post(
                         f"{self.api_base}/chat/completions",
                         json=payload,
@@ -273,9 +277,23 @@ class OpenAIScriptGenerator(ScriptGeneratorBase):
                 )
                 return scenes
 
+            except httpx.ConnectError as e:
+                # Connection refused / unreachable — fail fast, don't burn retries
+                raise RuntimeError(
+                    f"Cannot connect to LLM at {self.api_base}: {e}. "
+                    f"Check LLM_API_BASE_URL env var."
+                ) from e
+
             except (httpx.HTTPStatusError, httpx.TimeoutException) as e:
                 last_error = e
                 logger.warning("HTTP error on attempt %d: %s", attempt, e)
+                if attempt < max_retries:
+                    await asyncio.sleep(3 * attempt)
+                    continue
+
+            except httpx.HTTPError as e:
+                last_error = e
+                logger.warning("HTTP transport error on attempt %d: %s", attempt, e)
                 if attempt < max_retries:
                     await asyncio.sleep(3 * attempt)
                     continue

@@ -95,6 +95,21 @@ def health():
     }
 
 
+@app.get("/api/v1/debug/config", tags=["debug"])
+def debug_config():
+    """Show non-sensitive runtime config to help debug deployment issues."""
+    return {
+        "llm_api_base_url": settings.llm_api_base_url,
+        "llm_model": settings.llm_model,
+        "llm_api_key_set": bool(settings.llm_api_key and settings.llm_api_key != "ollama"),
+        "tts_engine": settings.tts_engine,
+        "image_engine": settings.image_engine,
+        "use_celery": settings.use_celery,
+        "use_gpu": settings.use_gpu,
+        "database": "postgresql" if "postgresql" in settings.database_url else "sqlite",
+    }
+
+
 @app.get("/api/v1/metrics", tags=["monitoring"])
 def metrics_json():
     """Pipeline metrics in JSON format."""
