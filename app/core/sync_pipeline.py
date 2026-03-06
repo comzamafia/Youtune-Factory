@@ -93,6 +93,19 @@ def _pipeline_thread(novel_id: str, job_id: str):
         novel.status = "processing"
         db.commit()
 
+        # ── Cleanup: Delete old scenes/videos from previous runs ─────
+        old_scenes = db.query(Scene).filter(Scene.novel_id == nid).all()
+        if old_scenes:
+            logger.info("[sync] Deleting %d old scenes from previous run", len(old_scenes))
+            for s in old_scenes:
+                db.delete(s)
+            db.commit()
+        old_videos = db.query(Video).filter(Video.novel_id == nid).all()
+        for v in old_videos:
+            db.delete(v)
+        if old_videos:
+            db.commit()
+
         # ── Step 1: Generate script (LLM scene splitting) ────────────
         logger.info("[sync] Step 1/6: Generating script for '%s'…", novel.title)
         from app.core.story_processor import process_novel
@@ -124,7 +137,10 @@ def _pipeline_thread(novel_id: str, job_id: str):
         for s in scenes:
             out = settings.voice_dir / f"scene_{s.scene_number:04d}{voice_ext}"
             _run_async(voice_gen.generate(s.scene_text, out))
+            if not out.exists() or out.stat().st_size < 100:
+                raise RuntimeError(f"Voice file empty or missing: {out} (text: {s.scene_text[:50]})")
             s.voice_path = str(out)
+            logger.info("[sync] Voice scene %d: %d bytes", s.scene_number, out.stat().st_size)
         db.commit()
         logger.info("[sync] Voice done.")
 
