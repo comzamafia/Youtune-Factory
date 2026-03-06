@@ -94,7 +94,7 @@ class Settings(BaseSettings):
 
     # ── Long-Content / Multi-Part ──────────────────────────────────────
     # Maximum characters per LLM chunk (must fit model context window)
-    llm_chunk_max_chars: int = 3000
+    llm_chunk_max_chars: int = 1500
     # Maximum scenes per video part (0 = unlimited / single video)
     max_scenes_per_part: int = 150
     # Maximum total scenes allowed for a single novel (safety limit)

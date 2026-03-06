@@ -156,6 +156,12 @@ class OpenAIScriptGenerator(ScriptGeneratorBase):
         global_scene_num = 0
 
         for chunk_idx, chunk in enumerate(chunks, start=1):
+            # Rate-limit delay between chunks (Groq free tier = 6000 TPM)
+            if chunk_idx > 1:
+                import asyncio
+                logger.info("Waiting 15s between chunks to respect rate limits…")
+                await asyncio.sleep(15)
+
             chunk_scenes = await self._generate_scenes_for_chunk(
                 chunk, title, chunk_idx, len(chunks),
             )
@@ -201,7 +207,7 @@ class OpenAIScriptGenerator(ScriptGeneratorBase):
                 {"role": "user", "content": user_msg},
             ],
             "temperature": 0.7,
-            "max_tokens": 8192,
+            "max_tokens": 2048,
         }
 
         # Ollama-specific: disable thinking at model level
@@ -213,7 +219,7 @@ class OpenAIScriptGenerator(ScriptGeneratorBase):
             if is_qwen:
                 payload["keep_alive"] = "5m"
 
-        max_retries = 3
+        max_retries = 5
         last_error: Exception | None = None
 
         logger.info("Calling LLM: %s model=%s", self.api_base, self.model)
@@ -286,9 +292,15 @@ class OpenAIScriptGenerator(ScriptGeneratorBase):
 
             except (httpx.HTTPStatusError, httpx.TimeoutException) as e:
                 last_error = e
-                logger.warning("HTTP error on attempt %d: %s", attempt, e)
+                # 429 rate limit — use longer backoff
+                if isinstance(e, httpx.HTTPStatusError) and e.response.status_code == 429:
+                    wait = min(60, 15 * attempt)  # 15, 30, 45, 60, 60
+                    logger.warning("Rate limited (429) on attempt %d, waiting %ds…", attempt, wait)
+                else:
+                    wait = 3 * attempt
+                    logger.warning("HTTP error on attempt %d: %s", attempt, e)
                 if attempt < max_retries:
-                    await asyncio.sleep(3 * attempt)
+                    await asyncio.sleep(wait)
                     continue
 
             except httpx.HTTPError as e:
