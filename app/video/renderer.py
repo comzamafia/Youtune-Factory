@@ -66,25 +66,33 @@ def _build_ffmpeg_video_cmd(
 ) -> list[str]:
     """Construct the FFmpeg command for a scene rendered from a source video + TTS audio.
 
-    The source video is loop-streamed so that clips shorter than the audio are
-    automatically repeated.  The TTS audio replaces the original video soundtrack.
+    Uses a two-step approach to stay within Railway's memory limits:
+    Step 1 would be optional scaling (done here in single pass).
+    The video plays once (no loop) and is trimmed to audio length via -shortest.
     """
     cmd = ["ffmpeg", "-y"]
 
     if settings.use_gpu:
         cmd.extend(["-hwaccel", settings.ffmpeg_hwaccel])
 
-    # -stream_loop -1 loops the video indefinitely; trimmed by -t or -shortest
-    cmd.extend(["-stream_loop", "-1", "-i", str(video_source)])
+    # Input video (single pass, no loop to save memory)
+    cmd.extend(["-i", str(video_source)])
     cmd.extend(["-i", str(audio_path)])
 
     # Map video from source, audio from TTS (drop original video audio)
     cmd.extend(["-map", "0:v:0", "-map", "1:a:0"])
 
+    # Video codec — ultrafast, single thread, constrained buffers for low memory
     if settings.use_gpu:
         cmd.extend(["-c:v", settings.ffmpeg_vcodec])
     else:
-        cmd.extend(["-c:v", "libx264", "-preset", "ultrafast", "-threads", "1"])
+        cmd.extend([
+            "-c:v", "libx264",
+            "-preset", "ultrafast",
+            "-threads", "1",
+            "-maxrate", "2M",
+            "-bufsize", "1M",
+        ])
 
     cmd.extend(["-c:a", "aac", "-b:a", "128k", "-ar", "44100", "-pix_fmt", "yuv420p"])
 
