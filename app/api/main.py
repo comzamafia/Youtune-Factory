@@ -24,9 +24,19 @@ async def lifespan(app: FastAPI):
     """Startup / shutdown events."""
     # ── Startup ──
     logger.info("🚀 Starting AI YouTube Novel Factory…")
-    settings.ensure_dirs()
-    init_db()
-    logger.info("✅ Database tables ensured, directories created.")
+    try:
+        settings.ensure_dirs()
+        logger.info("✅ Directories ensured.")
+    except Exception as exc:  # pragma: no cover
+        logger.warning("⚠️  Could not create dirs (non-fatal): %s", exc)
+
+    try:
+        init_db()
+        logger.info("✅ Database tables ensured.")
+    except Exception as exc:  # pragma: no cover
+        # DB may not be ready yet (e.g. Railway cold start without DATABASE_URL).
+        # App will still serve /health so Railway health check passes.
+        logger.warning("⚠️  DB init failed (app will still start): %s", exc)
 
     yield
 
