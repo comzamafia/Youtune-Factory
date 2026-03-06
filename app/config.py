@@ -79,6 +79,10 @@ class Settings(BaseSettings):
     ffmpeg_vcodec: str = "h264_nvenc"
     ffmpeg_max_workers: int = 4
 
+    # ── Celery / Worker ────────────────────────────────────────────────
+    # Set to false to run pipeline synchronously (no Celery/Redis needed)
+    use_celery: bool = True
+
     # ── Long-Content / Multi-Part ──────────────────────────────────────
     # Maximum characters per LLM chunk (must fit model context window)
     llm_chunk_max_chars: int = 3000

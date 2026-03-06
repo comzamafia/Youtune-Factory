@@ -49,3 +49,27 @@ def get_job(
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
     return job
+
+
+@router.delete("/{job_id}", status_code=204)
+def delete_job(
+    job_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    _token: str = Depends(verify_token),
+):
+    """Delete a single job record."""
+    job = db.query(Job).filter(Job.job_id == job_id).first()
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    db.delete(job)
+    db.commit()
+
+
+@router.delete("", status_code=204)
+def clear_all_jobs(
+    db: Session = Depends(get_db),
+    _token: str = Depends(verify_token),
+):
+    """Delete all job records."""
+    db.query(Job).delete()
+    db.commit()

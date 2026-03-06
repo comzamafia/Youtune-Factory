@@ -22,7 +22,12 @@ from app.api.schemas import (
 from app.config import settings
 from app.core.database import get_db
 from app.core.models import Novel
-from app.core.pipeline import run_batch, run_pipeline
+
+if settings.use_celery:
+    from app.core.pipeline import run_batch, run_pipeline
+else:
+    from app.core.sync_pipeline import run_pipeline_sync as run_pipeline
+    run_batch = None  # batch not supported in sync mode
 
 router = APIRouter(prefix="/novels", tags=["novels"])
 
@@ -160,7 +165,11 @@ def trigger_batch_pipeline(
     _token: str = Depends(verify_token),
 ):
     """Trigger the pipeline for multiple novels at once."""
-    job_ids = run_batch(body.novel_ids)
+    if not settings.use_celery:
+        # Sync mode: run one by one
+        job_ids = [run_pipeline(nid) for nid in body.novel_ids]
+    else:
+        job_ids = run_batch(body.novel_ids)
     return BatchPipelineResponse(
         job_ids=job_ids,
         message=f"Batch pipeline started for {len(body.novel_ids)} novels",

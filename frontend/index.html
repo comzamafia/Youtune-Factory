@@ -150,8 +150,9 @@ header h1 span{color:var(--accent)}
 
     <!-- Jobs Tab -->
     <div class="tab-content" id="tab-jobs">
-      <div style="margin-bottom:16px">
+      <div style="margin-bottom:16px;display:flex;gap:8px">
         <button class="btn btn-outline" onclick="loadJobs()">🔄 รีเฟรช</button>
+        <button class="btn btn-sm btn-danger" id="clearJobsBtn" onclick="clearAllJobs(this)"><span class="spinner"></span> 🗑 ลบงานทั้งหมด</button>
       </div>
       <div id="jobList"></div>
     </div>
@@ -477,7 +478,10 @@ async function loadJobs() {
             <div class="card-title">${esc(j.job_type || 'งาน')} · ${j.job_id.substring(0,8)}…</div>
             <div class="card-meta">${fmtDate(j.created_at)}${j.started_at ? ' → เริ่ม ' + fmtDate(j.started_at) : ''}${j.finished_at ? ' → เสร็จ ' + fmtDate(j.finished_at) : ''}</div>
           </div>
-          <span class="badge ${badgeClass(j.status)}">${esc(j.status)}</span>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span class="badge ${badgeClass(j.status)}">${esc(j.status)}</span>
+            <button class="btn btn-sm btn-danger" onclick="deleteJob('${j.job_id}',this)" title="ลบ">✕</button>
+          </div>
         </div>
         ${j.error_message ? '<div style="color:var(--red);font-size:13px;margin-top:8px">❌ ' + esc(j.error_message) + '</div>' : ''}
       </div>
@@ -488,6 +492,34 @@ async function loadJobs() {
 }
 
 // ── Videos ────────────────────────────────────────────────────────────────────
+
+async function deleteJob(jobId, btn) {
+  setLoading(btn, true);
+  try {
+    await api('/jobs/' + jobId, { method: 'DELETE' });
+    toast('ลบงานสำเร็จ', 'success');
+    loadJobs();
+  } catch (e) {
+    toast('ลบงานไม่สำเร็จ: ' + e.message, 'error');
+    setLoading(btn, false);
+  }
+}
+
+async function clearAllJobs(btn) {
+  if (!confirm('ต้องการลบงานทั้งหมด?')) return;
+  setLoading(btn, true);
+  try {
+    await api('/jobs', { method: 'DELETE' });
+    toast('ลบงานทั้งหมดสำเร็จ', 'success');
+    loadJobs();
+  } catch (e) {
+    toast('ลบไม่สำเร็จ: ' + e.message, 'error');
+  } finally {
+    setLoading(btn, false);
+  }
+}
+
+// ── Videos (cont) ─────────────────────────────────────────────────────────────
 
 async function loadVideos() {
   const el = document.getElementById('videoList');
