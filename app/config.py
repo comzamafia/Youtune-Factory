@@ -85,6 +85,9 @@ class Settings(BaseSettings):
     subtitle_margin_v: int = 30
     # Horizontal margin (px) — side padding so text doesn't touch edges
     subtitle_margin_h: int = 5
+    # Image motion effect applied to static images (animates still → cinematic).
+    # Options: none, zoom_in, ken_burns, zoom_3d, random
+    image_motion_effect: str = "ken_burns"
     # ── GPU / FFmpeg ───────────────────────────────────────────────────
     use_gpu: bool = True
     ffmpeg_hwaccel: str = "cuda"

@@ -191,6 +191,7 @@ async def main():
                 "image_path": scene.image_path,
                 "audio_path": scene.voice_path,
                 "duration": duration,
+                "scene_index": scene.scene_number - 1,
             }
             render_scene(scene_dict, clip_path)
             clip_paths.append(clip_path)

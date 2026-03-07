@@ -187,6 +187,7 @@ def _pipeline_thread(novel_id: str, job_id: str):
                     "audio_path": s.voice_path,
                     "output_path": str(clip),
                     "duration": (s.end_time or 6.0) - (s.start_time or 0.0),
+                    "scene_index": s.scene_number - 1,
                 })
             clip_paths = render_scenes_parallel(render_data, max_workers=1)
 

@@ -11,12 +11,110 @@ from app.config import settings
 
 logger = logging.getLogger(__name__)
 
+# Direction vectors for Ken Burns panning: (dx, dy).  Cycles per scene_index.
+_MOTION_DIRECTIONS = [(1, 0), (-1, 0), (0, 1), (0, -1), (1, -1), (-1, 1)]
+
+
+def _build_zoompan_vf(
+    duration: float,
+    width: int,
+    height: int,
+    effect: str,
+    scene_index: int = 0,
+) -> str:
+    """Build an FFmpeg -vf filter string that animates a static image.
+
+    Uses the zoompan filter with ``-framerate 1 -loop 1`` image input.
+    zoompan upconverts to 25 fps, producing smooth cinematic motion —
+    no extra libraries required, pure FFmpeg.
+
+    Effects
+    -------
+    none      – plain scale + letterbox, no animation (fastest)
+    zoom_in   – gentle center zoom 1.0 → 1.15
+    ken_burns – zoom + directional pan, direction cycles per scene_index
+    zoom_3d   – aggressive zoom 1.0 → 1.35 for dramatic openers
+    random    – cycles zoom_in / ken_burns / zoom_3d by scene_index
+    """
+    if effect == "none":
+        return (
+            f"scale={width}:{height}:force_original_aspect_ratio=decrease,"
+            f"pad={width}:{height}:(ow-iw)/2:(oh-ih)/2"
+        )
+
+    if effect == "random":
+        choices = ["zoom_in", "ken_burns", "zoom_3d"]
+        effect = choices[scene_index % len(choices)]
+
+    fps = 25
+    frames = max(fps, int(duration * fps))  # at least 1 second of frames
+
+    # Pre-scale to 40 % oversized canvas so zoom never exposes black bars.
+    # Dimensions must be even for h264/NVENC.
+    over_w = (int(width * 1.4) // 2) * 2
+    over_h = (int(height * 1.4) // 2) * 2
+
+    prescale = (
+        f"scale={over_w}:{over_h}:force_original_aspect_ratio=decrease,"
+        f"pad={over_w}:{over_h}:(ow-iw)/2:(oh-ih)/2"
+    )
+
+    # zoompan: d=frames outputs exactly ``frames`` frames from one looped
+    # input frame; fps=25 sets output PTS for smooth 25 fps downstream.
+    zp = f"zoompan=d={frames}:s={width}x{height}:fps={fps}"
+
+    # Centred crop anchor.
+    # In z expression: ``zoom`` = previous frame’s zoom (pzoom, starts at 1.0).
+    # In x/y expressions: ``zoom`` = current frame’s zoom (result of z expr).
+    cx = "iw/2-(iw/zoom/2)"
+    cy = "ih/2-(ih/zoom/2)"
+
+    if effect == "zoom_in":
+        step = 0.15 / frames
+        z = f"min(zoom+{step:.8f},1.15)"
+        return f"{prescale},{zp}:z='{z}':x='{cx}':y='{cy}'"
+
+    if effect == "zoom_3d":
+        step = 0.35 / frames
+        z = f"min(zoom+{step:.8f},1.35)"
+        return f"{prescale},{zp}:z='{z}':x='{cx}':y='{cy}'"
+
+    if effect == "ken_burns":
+        dx, dy = _MOTION_DIRECTIONS[scene_index % len(_MOTION_DIRECTIONS)]
+        zoom_range = 0.12
+        step = zoom_range / frames
+        z = f"min(zoom+{step:.8f},1.12)"
+        # Pan grows proportionally with zoom accumulation.
+        # max_pan = 8 % of oversized dimension — stays within image content.
+        # pflx/pfly = pixels of pan per unit of zoom change.
+        max_pan_x = over_w * 0.08
+        max_pan_y = over_h * 0.08
+        pflx = max_pan_x / zoom_range
+        pfly = max_pan_y / zoom_range
+        # Build clamped pan expressions; avoid `+-` by separating sign from magnitude.
+        def _pan_expr(base: str, d: int, scale_px: float, dim: str, zoom_dim: str) -> str:
+            if not d:
+                return base
+            sign = "+" if d > 0 else "-"
+            mag = abs(d) * scale_px
+            return f"max(0,min({dim}-{zoom_dim},{base}{sign}(zoom-1)*{mag:.4f}))"
+        x_expr = _pan_expr(cx, dx, pflx, "iw", "iw/zoom")
+        y_expr = _pan_expr(cy, dy, pfly, "ih", "ih/zoom")
+        return f"{prescale},{zp}:z='{z}':x='{x_expr}':y='{y_expr}'"
+
+    # Unknown effect — plain scale/pad fallback
+    return (
+        f"scale={width}:{height}:force_original_aspect_ratio=decrease,"
+        f"pad={width}:{height}:(ow-iw)/2:(oh-ih)/2"
+    )
+
 
 def _build_ffmpeg_image_cmd(
     image_path: Path,
     audio_path: Path,
     output_path: Path,
     duration: float | None = None,
+    scene_index: int = 0,
 ) -> list[str]:
     """Construct the FFmpeg command for a scene rendered from a static image + audio."""
     cmd = ["ffmpeg", "-y"]
@@ -39,12 +137,12 @@ def _build_ffmpeg_image_cmd(
     cmd.extend(["-pix_fmt", "yuv420p"])
     cmd.extend(["-r", "25"])
 
-    # Scale and pad to configured output dimensions (default 1080×1920 = 9:16 vertical)
-    vf = (
-        f"scale={settings.video_width}:{settings.video_height}"
-        f":force_original_aspect_ratio=decrease,"
-        f"pad={settings.video_width}:{settings.video_height}"
-        f":(ow-iw)/2:(oh-ih)/2"
+    vf = _build_zoompan_vf(
+        duration=duration or 6.0,
+        width=settings.video_width,
+        height=settings.video_height,
+        effect=settings.image_motion_effect,
+        scene_index=scene_index,
     )
     cmd.extend(["-vf", vf])
 
@@ -140,7 +238,8 @@ def render_scene(
         ip = Path(image_path)
         if not ip.exists():
             raise RuntimeError(f"Image file not found: {ip}")
-        cmd = _build_ffmpeg_image_cmd(ip, audio_path, output_path, duration)
+        scene_index = scene.get("scene_index", 0)
+        cmd = _build_ffmpeg_image_cmd(ip, audio_path, output_path, duration, scene_index)
         scene_type = "image"
 
     logger.info("Rendering scene (%s): %s | cmd: %s", scene_type, output_path.name, " ".join(cmd))
