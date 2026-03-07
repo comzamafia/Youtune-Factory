@@ -258,13 +258,14 @@ class OpenAIScriptGenerator(ScriptGeneratorBase):
         # Ollama-specific: use num_predict instead of max_tokens
         # (max_tokens via OpenAI compat layer caps thinking+output combined,
         #  causing empty responses when thinking uses all tokens)
-        # num_predict: 4096 is plenty for scene JSON output (no thinking mode)
+        # num_predict: 8192 — 13 scenes × ~200 tokens/scene JSON ≈ 2600 tokens;
+        #   use 8192 to give ample room for larger novels without truncation.
         # num_ctx: 16384 — Thai text is dense (~1-2 chars/token); a 6000-char
         #   chunk can consume 3000-6000 tokens, easily overflowing num_ctx=4096
         #   which causes Ollama to silently clip input → bad/truncated JSON.
         if "localhost:11434" in self.api_base:
             payload["options"] = {
-                "num_predict": 4096,
+                "num_predict": 8192,
                 "num_ctx": 16384,
             }
             # keep_alive for ALL local models (not just Qwen) so the model
