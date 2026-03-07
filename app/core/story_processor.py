@@ -150,6 +150,11 @@ async def process_novel(novel_id: uuid.UUID, db: Session) -> list[Scene]:
         scenes_in_part = 0
 
         for sd in scene_datas:
+            # Skip scenes with empty text (LLM occasionally returns blank entries)
+            if not sd.text or not sd.text.strip():
+                logger.warning("Skipping scene %d: empty text", sd.scene_number)
+                continue
+
             # Move to next part if limit reached (0 = unlimited)
             if max_per_part > 0 and scenes_in_part >= max_per_part:
                 current_part += 1

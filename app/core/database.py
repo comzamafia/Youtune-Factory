@@ -7,13 +7,14 @@ from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
 from app.config import settings
 
-engine = create_engine(
-    settings.database_url,
-    pool_size=10,
-    max_overflow=20,
-    pool_pre_ping=True,
-    echo=False,
-)
+_is_sqlite = settings.database_url.startswith("sqlite")
+_engine_kwargs: dict = {"echo": False}
+if _is_sqlite:
+    _engine_kwargs["connect_args"] = {"check_same_thread": False}
+else:
+    _engine_kwargs.update({"pool_size": 10, "max_overflow": 20, "pool_pre_ping": True})
+
+engine = create_engine(settings.database_url, **_engine_kwargs)
 
 SessionLocal: sessionmaker[Session] = sessionmaker(
     bind=engine,
@@ -47,6 +48,8 @@ def migrate_db() -> None:
     migrations = [
         "ALTER TABLE jobs ADD COLUMN current_step TEXT",
         "ALTER TABLE videos ADD COLUMN video_path_16x9 TEXT",
+        "ALTER TABLE jobs ADD COLUMN progress INTEGER DEFAULT 0",
+        "ALTER TABLE videos ADD COLUMN audio_path TEXT",
     ]
     with engine.connect() as conn:
         for sql in migrations:

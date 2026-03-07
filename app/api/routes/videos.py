@@ -84,6 +84,28 @@ def download_video_16x9(
     )
 
 
+@router.get("/{video_id}/download-audio")
+def download_audio(
+    video_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    _token: str = Depends(verify_token),
+):
+    """Download the combined narration audio as MP3."""
+    video = db.query(Video).filter(Video.id == video_id).first()
+    if not video:
+        raise HTTPException(status_code=404, detail="Video not found")
+    if not video.audio_path:
+        raise HTTPException(status_code=404, detail="No audio file available")
+    p = Path(video.audio_path)
+    if not p.exists():
+        raise HTTPException(status_code=404, detail="Audio file not found on disk")
+    return FileResponse(
+        path=p,
+        media_type="audio/mpeg",
+        filename=p.name,
+    )
+
+
 @router.get("/{video_id}", response_model=VideoResponse)
 def get_video(
     video_id: uuid.UUID,

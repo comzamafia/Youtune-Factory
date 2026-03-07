@@ -33,7 +33,8 @@ class Settings(BaseSettings):
     output_dir: str = "output"
 
     # ── Database ───────────────────────────────────────────────────────
-    database_url: str = "postgresql://postgres:password@localhost:5432/aiyoutube"
+    # Local default: SQLite (no PostgreSQL needed). Override with DATABASE_URL env var for production.
+    database_url: str = "sqlite:///./aiyoutube.db"
 
     # ── Redis / Celery ─────────────────────────────────────────────────
     redis_url: str = "redis://localhost:6379/0"
@@ -95,8 +96,8 @@ class Settings(BaseSettings):
     ffmpeg_max_workers: int = 4
 
     # ── Celery / Worker ────────────────────────────────────────────────
-    # Set to false to run pipeline synchronously (no Celery/Redis needed)
-    use_celery: bool = True
+    # Local default: sync thread (no Celery/Redis needed). Set USE_CELERY=true for production.
+    use_celery: bool = False
 
     # ── Long-Content / Multi-Part ──────────────────────────────────────
     # Maximum characters per LLM chunk (must fit model context window)

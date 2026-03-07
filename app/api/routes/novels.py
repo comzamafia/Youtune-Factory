@@ -133,6 +133,29 @@ def delete_novel(
     db.commit()
 
 
+@router.post("/{novel_id}/resume", response_model=PipelineResponse)
+def resume_pipeline(
+    novel_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    _token: str = Depends(verify_token),
+):
+    """Resume a failed pipeline from where it left off (skips already-completed steps)."""
+    if settings.use_celery:
+        raise HTTPException(400, "Resume is only supported in sync mode (USE_CELERY=false)")
+    novel = db.query(Novel).filter(Novel.id == novel_id).first()
+    if not novel:
+        raise HTTPException(status_code=404, detail="Novel not found")
+
+    from app.core.sync_pipeline import resume_pipeline_sync
+    job_id = resume_pipeline_sync(novel_id)
+    return PipelineResponse(
+        job_id=job_id,
+        novel_id=str(novel_id),
+        message=f"Resuming pipeline for '{novel.title}'",
+        estimated_parts=1,
+    )
+
+
 @router.post("/{novel_id}/process", response_model=PipelineResponse)
 def trigger_pipeline(
     novel_id: uuid.UUID,

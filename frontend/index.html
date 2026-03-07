@@ -88,6 +88,23 @@ header h1 span{color:var(--accent)}
 .empty{text-align:center;padding:60px 20px;color:var(--text2)}
 .empty-icon{font-size:48px;margin-bottom:12px}
 
+/* Job Progress */
+.job-progress-bar-wrap{background:var(--surface2);border-radius:6px;height:10px;overflow:hidden;margin:10px 0 4px}
+.job-progress-bar{height:100%;border-radius:6px;transition:width .6s ease;min-width:4px}
+.job-progress-bar.running{background:var(--accent);animation:progressPulse 2s ease-in-out infinite}
+.job-progress-bar.completed{background:var(--green)}
+.job-progress-bar.failed{background:var(--red)}
+@keyframes progressPulse{0%,100%{opacity:1}50%{opacity:.7}}
+.step-chips{display:flex;gap:4px;flex-wrap:wrap;margin-top:10px}
+.step-chip{font-size:11px;padding:3px 9px;border-radius:4px;white-space:nowrap}
+.step-chip.done{background:#16653233;color:var(--green)}
+.step-chip.active{background:#1d4ed844;color:var(--accent);font-weight:600;animation:chipPulse 1.5s ease-in-out infinite}
+.step-chip.pending{background:var(--surface2);color:var(--text2)}
+@keyframes chipPulse{0%,100%{opacity:1}50%{opacity:.6}}
+.job-error-box{background:#991b1b1a;border:1px solid #ef444440;border-radius:8px;padding:12px;margin-top:10px}
+.job-error-title{color:var(--red);font-size:13px;font-weight:600;margin-bottom:6px}
+.job-error-msg{color:#fca5a5;font-size:12px;font-family:monospace;white-space:pre-wrap;max-height:120px;overflow:auto;word-break:break-all}
+
 /* Novel text preview */
 .text-preview{color:var(--text2);font-size:13px;line-height:1.6;max-height:60px;overflow:hidden;margin-bottom:8px}
 
@@ -328,6 +345,7 @@ function novelCard(n) {
       <button class="btn btn-sm btn-success" id="proc-${n.id}" onclick="processNovel('${n.id}', this)">
         <span class="spinner"></span> ▶ สร้างวิดีโอ
       </button>
+      ${n.status === 'failed' ? `<button class="btn btn-sm" style="background:var(--orange);color:#fff" id="resume-${n.id}" onclick="resumeNovel('${n.id}', this)"><span class="spinner"></span> ↺ ทำต่อ</button>` : ''}
       <button class="btn btn-sm btn-danger" onclick="deleteNovel('${n.id}', this)">
         <span class="spinner"></span> 🗑 ลบ
       </button>
@@ -394,6 +412,20 @@ async function processNovel(id, btn) {
     loadJobs();
   } catch (e) {
     toast('สร้างวิดีโอไม่สำเร็จ: ' + e.message, 'error');
+  } finally {
+    setLoading(btn, false);
+  }
+}
+
+async function resumeNovel(id, btn) {
+  setLoading(btn, true);
+  try {
+    const data = await api('/novels/' + id + '/resume', { method: 'POST' });
+    toast('↺ ทำต่อจากจุดเดิม: ' + data.message, 'success');
+    switchTab('jobs');
+    loadJobs();
+  } catch (e) {
+    toast('ทำต่อไม่สำเร็จ: ' + e.message, 'error');
   } finally {
     setLoading(btn, false);
   }
@@ -467,36 +499,127 @@ async function deleteMedia(novelId, filename, el) {
 
 // ── Jobs ──────────────────────────────────────────────────────────────────────
 
+const PIPELINE_STEPS = [
+  {n:1, label:'📝 สร้างบท'},
+  {n:2, label:'🎙️ เสียงพากย์'},
+  {n:3, label:'🖼️ ภาพประกอบ'},
+  {n:4, label:'⏱️ คำนวณเวลา'},
+  {n:5, label:'🎬 เรนเดอร์'},
+  {n:6, label:'🖼️ รูปปก'},
+];
+
+let _jobRefreshTimer = null;
+let _jobClockTimer = null;
+let _runningJobTimes = {}; // job_id -> started_at string
+
+function startJobTimers(hasActive) {
+  if (_jobRefreshTimer) { clearInterval(_jobRefreshTimer); _jobRefreshTimer = null; }
+  if (_jobClockTimer) { clearInterval(_jobClockTimer); _jobClockTimer = null; }
+  if (!hasActive) return;
+  _jobRefreshTimer = setInterval(() => { if (activeTab === 'jobs') loadJobs(); }, 3000);
+  _jobClockTimer = setInterval(tickJobClocks, 1000);
+}
+
+function stopJobTimers() {
+  if (_jobRefreshTimer) { clearInterval(_jobRefreshTimer); _jobRefreshTimer = null; }
+  if (_jobClockTimer) { clearInterval(_jobClockTimer); _jobClockTimer = null; }
+}
+
+function tickJobClocks() {
+  for (const [jid, startedAt] of Object.entries(_runningJobTimes)) {
+    const el = document.getElementById('elapsed-' + jid);
+    if (el) el.textContent = fmtElapsed(startedAt);
+  }
+}
+
+function fmtElapsed(startedAt) {
+  const sec = Math.floor((Date.now() - new Date(startedAt)) / 1000);
+  const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), s = sec % 60;
+  if (h > 0) return `${h}ชม. ${m}น. ${s}ว.`;
+  if (m > 0) return `${m}น. ${s}ว.`;
+  return `${s}ว.`;
+}
+
+function fmtDuration(startedAt, finishedAt) {
+  const sec = Math.floor((new Date(finishedAt) - new Date(startedAt)) / 1000);
+  const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), s = sec % 60;
+  if (h > 0) return `${h}ชม. ${m}น. ${s}ว.`;
+  if (m > 0) return `${m}น. ${s}ว.`;
+  return `${s}ว.`;
+}
+
+function renderStepChips(currentStep, status) {
+  if (status !== 'running' && status !== 'completed') return '';
+  const currentN = status === 'completed' ? 99 :
+    (currentStep ? parseInt((currentStep.match(/^(\d+)\//) || [])[1] || '0') : 0);
+  return '<div class="step-chips">' + PIPELINE_STEPS.map(s => {
+    let cls = s.n < currentN ? 'done' : s.n === currentN ? 'active' : 'pending';
+    return `<span class="step-chip ${cls}">${s.label}${s.n === currentN ? ' ↻' : s.n < currentN ? ' ✓' : ''}</span>`;
+  }).join('') + '</div>';
+}
+
+function jobCard(j) {
+  const pct = j.progress || 0;
+  const isRunning = j.status === 'running';
+  const isDone = j.status === 'completed';
+  const isFailed = j.status === 'failed';
+  const isQueued = j.status === 'queued';
+  const showBar = isRunning || isDone || isFailed;
+
+  const subDetail = j.current_step && (isRunning || isDone)
+    ? `<div style="font-size:12px;color:var(--text2);margin-top:2px">⏳ ${esc(j.current_step)}</div>` : '';
+  const elapsedHtml = isRunning && j.started_at
+    ? `<div style="font-size:12px;color:var(--text2);margin-top:4px">⏱ เวลาที่ใช้: <b><span id="elapsed-${j.job_id}">…</span></b></div>` : '';
+  const doneHtml = isDone && j.started_at && j.finished_at
+    ? `<div style="font-size:12px;color:var(--green);margin-top:4px">✅ เสร็จภายใน <b>${fmtDuration(j.started_at, j.finished_at)}</b></div>` : '';
+  const queuedHtml = isQueued ? `<div style="font-size:12px;color:var(--yellow);margin-top:4px">⏸ รอคิว…</div>` : '';
+  const errorHtml = isFailed && j.error_message
+    ? `<div class="job-error-box"><div class="job-error-title">❌ เกิดข้อผิดพลาด</div><div class="job-error-msg">${esc(j.error_message)}</div></div>` : '';
+  const resumeHtml = isFailed && j.novel_id
+    ? `<div style="margin-top:10px"><button class="btn btn-sm" style="background:var(--orange);color:#fff" onclick="resumeNovel('${j.novel_id}',this)"><span class="spinner"></span> ↺ ทำต่อจากจุดเดิม</button></div>` : '';
+  const barHtml = showBar ? `
+    <div class="job-progress-bar-wrap">
+      <div class="job-progress-bar ${j.status}" style="width:${pct}%"></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text2)">
+      <span>${isDone ? 'เสร็จสมบูรณ์' : isFailed ? 'ล้มเหลวที่ ' + pct + '%' : 'กำลังดำเนินการ'}</span>
+      <span><b>${pct}%</b></span>
+    </div>` : '';
+
+  return `<div class="card">
+    <div class="card-header">
+      <div>
+        <div class="card-title">${jobLabel(j.job_type)}</div>
+        <div class="card-meta">สร้าง ${fmtDate(j.created_at)}${j.started_at ? ' · เริ่ม ' + fmtDate(j.started_at) : ''}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span class="badge ${badgeClass(j.status)}">${statusLabel(j.status)}</span>
+        <button class="btn btn-sm btn-danger" onclick="deleteJob('${j.job_id}',this)" title="ลบ">✕</button>
+      </div>
+    </div>
+    ${barHtml}
+    ${subDetail}${elapsedHtml}${doneHtml}${queuedHtml}${errorHtml}${resumeHtml}
+    ${j.job_type === 'full_pipeline' ? renderStepChips(j.current_step, j.status) : ''}
+  </div>`;
+}
+
 async function loadJobs() {
   const el = document.getElementById('jobList');
-  el.innerHTML = '<div class="empty">กำลังโหลด…</div>';
+  _runningJobTimes = {};
   let jobs = [];
   try {
     jobs = await api('/jobs?limit=50');
-    if (!jobs.length) { el.innerHTML = '<div class="empty"><div class="empty-icon">⚙️</div>ยังไม่มีงาน</div>'; return; }
-    el.innerHTML = jobs.map(j => `
-      <div class="card">
-        <div class="card-header">
-          <div>
-            <div class="card-title">${jobLabel(j.job_type)}</div>
-            <div class="card-meta">${fmtDate(j.created_at)}${j.started_at ? ' → เริ่ม ' + fmtDate(j.started_at) : ''}${j.finished_at ? ' → เสร็จ ' + fmtDate(j.finished_at) : ''}</div>
-          </div>
-          <div style="display:flex;align-items:center;gap:8px">
-            <span class="badge ${badgeClass(j.status)}">${statusLabel(j.status)}</span>
-            <button class="btn btn-sm btn-danger" onclick="deleteJob('${j.job_id}',this)" title="ลบ">✕</button>
-          </div>
-        </div>
-        ${j.error_message ? '<div style="color:var(--red);font-size:13px;margin-top:8px">❌ ' + esc(j.error_message) + '</div>' : ''}
-        ${j.status === 'running' && j.current_step ? '<div style="margin-top:6px;font-size:13px;color:var(--accent)">⏳ ' + esc(j.current_step) + '</div>' : ''}
-      </div>
-    `).join('');
+    if (!jobs.length) { el.innerHTML = '<div class="empty"><div class="empty-icon">⚙️</div>ยังไม่มีงาน</div>'; stopJobTimers(); return; }
+    el.innerHTML = jobs.map(j => {
+      if (j.status === 'running' && j.started_at) _runningJobTimes[j.job_id] = j.started_at;
+      return jobCard(j);
+    }).join('');
+    tickJobClocks(); // immediate update without waiting 1s
   } catch (e) {
     el.innerHTML = '<div class="empty" style="color:var(--red)">โหลดไม่สำเร็จ: ' + e.message + '</div>';
   }
-  // Auto-refresh while any job is still active
-  if (jobs.some(j => j.status === 'running' || j.status === 'queued')) {
-    setTimeout(() => { loadJobs(); if (activeTab === 'videos') loadVideos(); }, 5000);
-  }
+  const hasActive = jobs.some(j => j.status === 'running' || j.status === 'queued');
+  startJobTimers(hasActive);
 }
 
 const _jobLabels = {
@@ -565,6 +688,7 @@ async function loadVideos() {
         <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
           ${v.video_path ? '<button class="btn btn-primary" onclick="downloadVideo(\'' + v.id + '\')" style="font-size:0.85rem;padding:6px 14px">⬇️ ดาวน์โหลด 9:16</button>' : ''}
           ${v.video_path_16x9 ? '<button class="btn btn-outline" onclick="downloadVideo16x9(\'' + v.id + '\')" style="font-size:0.85rem;padding:6px 14px">⬇️ ดาวน์โหลด 16:9</button>' : ''}
+          ${v.audio_path ? '<button class="btn btn-outline" onclick="downloadAudio(\'' + v.id + '\')" style="font-size:0.85rem;padding:6px 14px">🎵 ดาวน์โหลด MP3</button>' : ''}
           ${v.youtube_url ? '<a href="' + esc(v.youtube_url) + '" target="_blank" class="btn btn-outline" style="font-size:0.85rem;padding:6px 14px">🔗 YouTube</a>' : ''}
           <button class="btn" onclick="deleteVideo(\'' + v.id + '\')" style="font-size:0.85rem;padding:6px 14px;background:var(--red);color:#fff">✕ ลบ</button>
         </div>
@@ -645,10 +769,37 @@ async function downloadVideo16x9(videoId) {
   }
 }
 
+async function downloadAudio(videoId) {
+  try {
+    const resp = await fetch(API + '/videos/' + videoId + '/download-audio', {
+      headers: { 'Authorization': 'Bearer ' + TOKEN }
+    });
+    if (!resp.ok) throw new Error('ดาวน์โหลดไม่สำเร็จ: ' + resp.status);
+    const blob = await resp.blob();
+    const cd = resp.headers.get('content-disposition');
+    let filename = 'audio.mp3';
+    if (cd) {
+      const m = cd.match(/filename\*?=(?:UTF-8'')?["']?([^"';\n]+)/i);
+      if (m) filename = decodeURIComponent(m[1]);
+    }
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(a.href);
+    toast('ดาวน์โหลด MP3 เรียบร้อย', 'success');
+  } catch (e) {
+    toast(e.message, 'error');
+  }
+}
+
 // ── Tabs ──────────────────────────────────────────────────────────────────
 let activeTab = 'novels';
 
 function switchTab(name) {
+  if (activeTab === 'jobs' && name !== 'jobs') stopJobTimers();
   activeTab = name;
   document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
   document.querySelectorAll('.tab-content').forEach(t => t.classList.toggle('active', t.id === 'tab-' + name));
