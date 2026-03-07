@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import re
 import subprocess
 from abc import ABC, abstractmethod
 from pathlib import Path
@@ -13,6 +14,42 @@ import httpx
 from app.config import settings
 
 logger = logging.getLogger(__name__)
+
+
+def clean_tts_text(text: str) -> str:
+    """Clean text before sending to TTS to avoid unnatural pauses and odd speech.
+
+    Removes/replaces characters that cause Edge TTS to stutter or pause:
+    - Parentheses (cause pause before/after)
+    - Smart quotes and special quote marks
+    - Ellipsis and multiple dots → single pause
+    - Markdown formatting symbols
+    - Multiple spaces/newlines → single space
+    """
+    # Remove content in parentheses that adds context notes, not narration
+    # e.g. "(เช่น ...)" → remove entirely if standalone, else keep content
+    text = re.sub(r'\(([^)]{0,30})\)', r'\1', text)   # short parens → keep content
+    text = re.sub(r'\([^)]+\)', '', text)              # long parens → remove
+
+    # Smart/curly quotes → straight
+    text = text.replace('\u201c', '').replace('\u201d', '')  # " "
+    text = text.replace('\u2018', '').replace('\u2019', '')  # ' '
+    text = text.replace('\u300c', '').replace('\u300d', '')  # 「 」
+    text = text.replace('\u2039', '').replace('\u203a', '')  # ‹ ›
+
+    # Ellipsis → comma pause (reads more naturally)
+    text = text.replace('…', ',')
+    text = re.sub(r'\.{2,}', ',', text)
+
+    # Remove markdown bold/italic
+    text = re.sub(r'\*+', '', text)
+    text = re.sub(r'_+', '', text)
+
+    # Collapse multiple spaces/newlines → single space
+    text = re.sub(r'[\r\n\t]+', ' ', text)
+    text = re.sub(r' {2,}', ' ', text)
+
+    return text.strip()
 
 
 class VoiceGeneratorBase(ABC):
@@ -112,7 +149,11 @@ class EdgeTTSVoiceGenerator(VoiceGeneratorBase):
 
         output_path.parent.mkdir(parents=True, exist_ok=True)
 
-        communicate = edge_tts.Communicate(text, self.voice)
+        cleaned = clean_tts_text(text)
+        if not cleaned:
+            cleaned = text.strip()
+
+        communicate = edge_tts.Communicate(cleaned, self.voice)
         await communicate.save(str(output_path))
 
         logger.info("Edge TTS (%s) → %s", self.voice, output_path.name)

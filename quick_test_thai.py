@@ -150,7 +150,7 @@ async def main():
     logger.info("[THUMB_GEN] Generating thumbnail...")
     from app.ai.thumbnail_generator import generate_thumbnail
 
-    thumb_path = settings.output_dir / "thumbnail.jpg"
+    thumb_path = settings.thumbnail_output_dir / "thumbnail.jpg"
     try:
         await generate_thumbnail(
             title=novel.title,
@@ -187,12 +187,12 @@ async def main():
         clip_path = settings.scenes_dir / f"thai_clip_{scene.scene_number:03d}.mp4"
         duration = scene.end_time - scene.start_time
         try:
-            render_scene(
-                image_path=Path(scene.image_path),
-                audio_path=Path(scene.voice_path),
-                output_path=clip_path,
-                duration=duration,
-            )
+            scene_dict = {
+                "image_path": scene.image_path,
+                "audio_path": scene.voice_path,
+                "duration": duration,
+            }
+            render_scene(scene_dict, clip_path)
             clip_paths.append(clip_path)
         except Exception as e:
             logger.error("[FAIL] Render failed: %s", e)

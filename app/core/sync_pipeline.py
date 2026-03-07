@@ -31,7 +31,7 @@ def _run_async(coro):
         loop.close()
 
 
-def _set_job(db, job_id: uuid.UUID, status: str, error: str | None = None):
+def _set_job(db, job_id: uuid.UUID, status: str, error: str | None = None, step: str | None = None):
     job = db.query(Job).filter(Job.job_id == job_id).first()
     if not job:
         return
@@ -43,6 +43,8 @@ def _set_job(db, job_id: uuid.UUID, status: str, error: str | None = None):
         job.finished_at = now
     if error:
         job.error_message = error
+    if step is not None:
+        job.current_step = step
     db.commit()
 
 
@@ -83,7 +85,7 @@ def _pipeline_thread(novel_id: str, job_id: str):
     jid = uuid.UUID(job_id)
     db = SessionLocal()
     try:
-        _set_job(db, jid, "running")
+        _set_job(db, jid, "running", step="1/6 สร้างบทจากนิยาย…")
 
         novel = db.query(Novel).filter(Novel.id == nid).first()
         if not novel:
@@ -128,8 +130,7 @@ def _pipeline_thread(novel_id: str, job_id: str):
         # Assign user-supplied media
         assign_media_to_scenes(scenes, db, novel_id=novel_id)
 
-        # ── Step 2: Generate voice (TTS) ─────────────────────────────
-        logger.info("[sync] Step 2/6: Generating voice for %d scenes…", len(scenes))
+        # ── Step 2: Generate voice (TTS) ─────────────────────────────        _set_job(db, jid, "running", step="2/6 สร้างเสียงพากย์…")        logger.info("[sync] Step 2/6: Generating voice for %d scenes…", len(scenes))
         from app.ai.voice_generator import get_voice_generator
         voice_gen = get_voice_generator()
         # edge_tts produces MP3; other engines may produce WAV
@@ -144,8 +145,7 @@ def _pipeline_thread(novel_id: str, job_id: str):
         db.commit()
         logger.info("[sync] Voice done.")
 
-        # ── Step 3: Generate images ──────────────────────────────────
-        logger.info("[sync] Step 3/6: Generating images…")
+        # ── Step 3: Generate images ──────────────────────────────────        _set_job(db, jid, "running", step="3/6 สร้างภาพ…")        logger.info("[sync] Step 3/6: Generating images…")
         from app.ai.image_generator import get_image_generator
         img_gen = get_image_generator()
         for s in scenes:
@@ -157,13 +157,13 @@ def _pipeline_thread(novel_id: str, job_id: str):
         db.commit()
         logger.info("[sync] Images done.")
 
-        # ── Step 4: Update scene timings ─────────────────────────────
-        logger.info("[sync] Step 4/6: Updating timings…")
+        # ── Step 4: Update scene timings ─────────────────────────────        _set_job(db, jid, "running", step="4/6 คำนวณเวลา…")        logger.info("[sync] Step 4/6: Updating timings…")
         from app.core.story_processor import update_scene_timings_from_audio
         update_scene_timings_from_audio(scenes, db)
         logger.info("[sync] Timings done.")
 
         # ── Step 5: Render video (per part) ──────────────────────────
+        _set_job(db, jid, "running", step="5/6 เรนเดอร์วิดีโอ…")
         logger.info("[sync] Step 5/6: Rendering video…")
         from app.ai.subtitle_generator import generate_subtitles_from_scenes
         from app.video.builder import build_final_video
@@ -220,6 +220,15 @@ def _pipeline_thread(novel_id: str, job_id: str):
                 music_path=music_files[0] if music_files else None,
             )
 
+            # Build 16:9 horizontal version (pillarbox)
+            from app.video.builder import build_16x9_from_vertical
+            vid_path_16x9 = settings.video_output_dir / f"{safe_title}{part_suffix}_16x9.mp4"
+            try:
+                build_16x9_from_vertical(vid_path, vid_path_16x9)
+            except Exception as e16:
+                logger.warning("[sync] 16:9 conversion failed (non-fatal): %s", e16)
+                vid_path_16x9 = None
+
             # DB video record
             video = db.query(Video).filter(
                 Video.novel_id == nid, Video.part_number == part_num
@@ -228,6 +237,8 @@ def _pipeline_thread(novel_id: str, job_id: str):
                 video = Video(novel_id=nid, part_number=part_num)
                 db.add(video)
             video.video_path = str(vid_path)
+            if vid_path_16x9:
+                video.video_path_16x9 = str(vid_path_16x9)
             video.subtitle_path = str(sub_path)
             video.status = "rendered"
             db.commit()
@@ -243,6 +254,7 @@ def _pipeline_thread(novel_id: str, job_id: str):
             logger.info("[sync] Part %d/%d rendered → %s", part_num, total_parts, vid_path)
 
         # ── Step 6: Thumbnail ────────────────────────────────────────
+        _set_job(db, jid, "running", step="6/6 สร้างรูปปก…")
         logger.info("[sync] Step 6/6: Generating thumbnail…")
         from app.ai.thumbnail_generator import generate_thumbnail
         for part_num in sorted(part_groups.keys()):

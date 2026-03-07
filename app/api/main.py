@@ -14,7 +14,7 @@ from fastapi.staticfiles import StaticFiles
 from app.api.auth import router as auth_router
 from app.api.routes import jobs, novels, videos
 from app.config import settings
-from app.core.database import init_db
+from app.core.database import init_db, migrate_db
 
 logging.basicConfig(
     level=logging.INFO,
@@ -36,6 +36,7 @@ async def lifespan(app: FastAPI):
 
     try:
         init_db()
+        migrate_db()
         logger.info("✅ Database tables ensured.")
     except Exception as exc:  # pragma: no cover
         # DB may not be ready yet (e.g. Railway cold start without DATABASE_URL).

@@ -74,14 +74,17 @@ class Settings(BaseSettings):
     # 1920x1080 = 16:9 horizontal (standard YouTube)
     video_width: int = 1080
     video_height: int = 1920
-    # Subtitle font size (pixels). For YouTube Shorts 1080x1920: ~24px
+    # Subtitle font size (pixels). For YouTube Shorts 1080x1920: ~14px
     # is readable without covering the frame.
-    subtitle_font_size: int = 24
+    subtitle_enabled: bool = False
+    subtitle_font_size: int = 14
     # Max characters per subtitle line (controls wrapping before splitting to new SRT entry)
     subtitle_max_chars_per_line: int = 28
     # Vertical margin from the bottom edge of the frame (pixels)
     # YouTube Shorts: ~30px sits just above the like/comment buttons
     subtitle_margin_v: int = 30
+    # Horizontal margin (px) — side padding so text doesn't touch edges
+    subtitle_margin_h: int = 5
     # ── GPU / FFmpeg ───────────────────────────────────────────────────
     use_gpu: bool = True
     ffmpeg_hwaccel: str = "cuda"
@@ -94,11 +97,12 @@ class Settings(BaseSettings):
 
     # ── Long-Content / Multi-Part ──────────────────────────────────────
     # Maximum characters per LLM chunk (must fit model context window)
-    llm_chunk_max_chars: int = 1500
+    # Thai text is dense (~100 chars/sentence); 6000 chars ≈ 2K tokens
+    llm_chunk_max_chars: int = 6000
     # Maximum scenes per video part (0 = unlimited / single video)
     max_scenes_per_part: int = 150
     # Maximum total scenes allowed for a single novel (safety limit)
-    max_total_scenes: int = 3000
+    max_total_scenes: int = 50
     # Celery concurrency limit for image tasks (prevents GPU OOM)
     image_task_concurrency: int = 2
     # Celery concurrency limit for voice tasks

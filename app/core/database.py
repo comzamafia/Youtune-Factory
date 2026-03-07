@@ -39,3 +39,19 @@ def get_db():
 def init_db() -> None:
     """Create all tables (dev convenience — use migrations in production)."""
     Base.metadata.create_all(bind=engine)
+
+
+def migrate_db() -> None:
+    """Add new columns to existing tables (safe to run repeatedly)."""
+    from sqlalchemy import text
+    migrations = [
+        "ALTER TABLE jobs ADD COLUMN current_step TEXT",
+        "ALTER TABLE videos ADD COLUMN video_path_16x9 TEXT",
+    ]
+    with engine.connect() as conn:
+        for sql in migrations:
+            try:
+                conn.execute(text(sql))
+                conn.commit()
+            except Exception:
+                pass  # Column already exists — safe to ignore

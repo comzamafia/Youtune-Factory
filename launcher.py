@@ -115,10 +115,12 @@ def check_server_already_running() -> bool:
 
 def start_server() -> subprocess.Popen:
     info(f"Starting server on port {PORT}...")
+    log_file = ROOT / "server.log"
+    log_handle = open(log_file, "w", encoding="utf-8")
     proc = subprocess.Popen(
         [str(VENV_PYTHON), "main.py", "--port", str(PORT)],
         cwd=str(ROOT),
-        stdout=subprocess.PIPE,
+        stdout=log_handle,
         stderr=subprocess.STDOUT,
         creationflags=subprocess.CREATE_NO_WINDOW,
     )
@@ -128,13 +130,18 @@ def start_server() -> subprocess.Popen:
         time.sleep(1)
         if is_port_open(PORT):
             ok(f"Server ready: {URL}")
+            info(f"Server log: {log_file}")
             return proc
         # Check if process died
         if proc.poll() is not None:
             fail("Server failed to start!")
-            output = proc.stdout.read().decode("utf-8", errors="replace") if proc.stdout else ""
-            if output:
-                print(f"    {output[:500]}")
+            log_handle.flush()
+            try:
+                output = log_file.read_text(encoding="utf-8", errors="replace")
+                if output:
+                    print(f"    {output[:500]}")
+            except Exception:
+                pass
             return proc
 
     fail(f"Server did not respond within 30s on port {PORT}")

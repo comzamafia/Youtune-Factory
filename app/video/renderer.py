@@ -29,11 +29,11 @@ def _build_ffmpeg_image_cmd(
     cmd.extend(["-framerate", "1", "-loop", "1", "-i", str(image_path)])
     cmd.extend(["-i", str(audio_path)])
 
-    # Video codec — ultrafast + threads 1 to stay within Railway memory limits
-    if settings.use_gpu:
-        cmd.extend(["-c:v", settings.ffmpeg_vcodec])
-    else:
-        cmd.extend(["-c:v", "libx264", "-preset", "ultrafast", "-threads", "1"])
+    # Video codec
+    vcodec = settings.ffmpeg_vcodec if settings.use_gpu else "libx264"
+    cmd.extend(["-c:v", vcodec])
+    if vcodec == "libx264":
+        cmd.extend(["-preset", "ultrafast", "-threads", "1"])
 
     cmd.extend(["-c:a", "aac", "-b:a", "128k", "-ar", "44100"])
     cmd.extend(["-pix_fmt", "yuv420p"])
@@ -82,17 +82,11 @@ def _build_ffmpeg_video_cmd(
     # Map video from source, audio from TTS (drop original video audio)
     cmd.extend(["-map", "0:v:0", "-map", "1:a:0"])
 
-    # Video codec — ultrafast, single thread, constrained buffers for low memory
-    if settings.use_gpu:
-        cmd.extend(["-c:v", settings.ffmpeg_vcodec])
-    else:
-        cmd.extend([
-            "-c:v", "libx264",
-            "-preset", "ultrafast",
-            "-threads", "1",
-            "-maxrate", "2M",
-            "-bufsize", "1M",
-        ])
+    # Video codec
+    vcodec = settings.ffmpeg_vcodec if settings.use_gpu else "libx264"
+    cmd.extend(["-c:v", vcodec])
+    if vcodec == "libx264":
+        cmd.extend(["-preset", "ultrafast", "-threads", "1", "-maxrate", "2M", "-bufsize", "1M"])
 
     cmd.extend(["-c:a", "aac", "-b:a", "128k", "-ar", "44100", "-pix_fmt", "yuv420p"])
 

@@ -44,16 +44,18 @@ class ScriptGeneratorBase(ABC):
 
 
 SYSTEM_PROMPT = """\
-You are a professional video scriptwriter.
+You are a JSON-only video scriptwriter. You NEVER output markdown, tables, or explanations.
 Your task is to split a novel excerpt into short video scenes.
 
 Rules:
 - Each scene should last 5-8 seconds when narrated.
 - Keep the original language of the text.
 - For each scene provide: scene text, a detailed image prompt (English, for AI image generation), and a mood keyword.
-- Return ONLY valid JSON - an array of objects with keys: scene_number, text, image_prompt, mood.
-- Do NOT wrap the JSON in markdown code fences.
-- Do NOT include any explanation or thinking, just the JSON array.
+- Return ONLY a JSON array. No other text before or after.
+- Keys must be exactly: scene_number, text, image_prompt, mood
+- Do NOT wrap in markdown code fences or backticks.
+- Do NOT include any explanation, thinking, comments, or markdown.
+- Your entire response must start with [ and end with ]
 """
 
 USER_PROMPT_TEMPLATE = """\
@@ -106,17 +108,21 @@ def _extract_json_array(raw: str) -> list[dict[str, Any]]:
         except json.JSONDecodeError:
             pass
 
-    # 5. Try to fix truncated JSON (missing closing ] or })
+    # 5. Try to fix truncated JSON by finding complete objects within the array
     if "[" in cleaned:
-        # Find start of array
         start_idx = cleaned.index("[")
         fragment = cleaned[start_idx:]
-        # Try appending closers
-        for suffix in ["]", "}]", '"}]', '"}]]']:
+        # Find all '}' positions and try closing the array after each (last to first)
+        brace_positions = [i for i, c in enumerate(fragment) if c == '}']
+        for pos in reversed(brace_positions):
+            candidate = fragment[:pos + 1] + ']'
             try:
-                result = json.loads(fragment + suffix)
-                if isinstance(result, list):
-                    logger.warning("Repaired truncated JSON by appending '%s'", suffix)
+                result = json.loads(candidate)
+                if isinstance(result, list) and len(result) > 0:
+                    logger.warning(
+                        "Repaired truncated JSON: kept %d complete objects out of truncated response",
+                        len(result),
+                    )
                     return result
             except json.JSONDecodeError:
                 continue
@@ -138,12 +144,49 @@ class OpenAIScriptGenerator(ScriptGeneratorBase):
         self.api_key = api_key or settings.llm_api_key
         self.model = model or settings.llm_model
 
+    async def _preload_model(self) -> None:
+        """Pre-load the Ollama model into VRAM before inference.
+
+        Calls Ollama's native /api/generate with an empty prompt, which loads
+        the model without generating any output. This guarantees the model is
+        hot in VRAM before the actual inference request, eliminating ReadTimeout
+        caused by model-loading delays.
+
+        Only runs for localhost Ollama; no-op for cloud APIs.
+        """
+        import time
+
+        ollama_base = self.api_base.replace("/v1", "").rstrip("/")
+        logger.info("Pre-loading model '%s' into VRAM via Ollama…", self.model)
+        start = time.monotonic()
+        try:
+            async with httpx.AsyncClient(
+                timeout=httpx.Timeout(connect=10, read=600, write=10, pool=10)
+            ) as client:
+                resp = await client.post(
+                    f"{ollama_base}/api/generate",
+                    json={"model": self.model, "prompt": "", "keep_alive": "1h"},
+                )
+                resp.raise_for_status()
+            logger.info("Model '%s' ready in %.1fs", self.model, time.monotonic() - start)
+        except Exception as e:
+            logger.warning(
+                "Model pre-load failed after %.1fs (%s: %s) — will proceed anyway",
+                time.monotonic() - start, type(e).__name__, e,
+            )
+
     async def generate_scenes(self, novel_text: str, title: str = "") -> list[SceneData]:
         """Send novel text to the LLM and parse the scene list.
 
         Long novels are automatically chunked to fit the LLM context window.
         Includes automatic retry (up to 3 attempts) per chunk.
         """
+        # For local Ollama: pre-load the model into VRAM before inference.
+        # This separates model-loading time from inference time, ensuring the
+        # actual generation request never times out waiting for model loading.
+        if "localhost:11434" in self.api_base:
+            await self._preload_model()
+
         chunks = _chunk_novel_text(novel_text, max_chars=settings.llm_chunk_max_chars)
 
         if len(chunks) > 1:
@@ -157,10 +200,13 @@ class OpenAIScriptGenerator(ScriptGeneratorBase):
 
         for chunk_idx, chunk in enumerate(chunks, start=1):
             # Rate-limit delay between chunks (Groq free tier = 6000 TPM)
+            # Skip long delay for local Ollama (no rate limits)
             if chunk_idx > 1:
                 import asyncio
-                logger.info("Waiting 15s between chunks to respect rate limits…")
-                await asyncio.sleep(15)
+                is_local = "localhost" in self.api_base or "127.0.0.1" in self.api_base
+                delay = 2 if is_local else 15
+                logger.info("Waiting %ds between chunks%s…", delay, "" if is_local else " (rate limit)")
+                await asyncio.sleep(delay)
 
             chunk_scenes = await self._generate_scenes_for_chunk(
                 chunk, title, chunk_idx, len(chunks),
@@ -206,26 +252,33 @@ class OpenAIScriptGenerator(ScriptGeneratorBase):
                 {"role": "system", "content": SYSTEM_PROMPT},
                 {"role": "user", "content": user_msg},
             ],
-            "temperature": 0.7,
-            "max_tokens": 2048,
+            "temperature": 0.4,
         }
 
-        # Ollama-specific: disable thinking at model level
+        # Ollama-specific: use num_predict instead of max_tokens
+        # (max_tokens via OpenAI compat layer caps thinking+output combined,
+        #  causing empty responses when thinking uses all tokens)
+        # num_predict: 4096 is plenty for scene JSON output (no thinking mode)
+        # num_ctx: 4096 covers novel chunks (max 3000 chars) + system prompt
         if "localhost:11434" in self.api_base:
             payload["options"] = {
-                "num_predict": 8192,
+                "num_predict": 4096,
+                "num_ctx": 4096,
             }
-            # For Qwen models via Ollama: use keep_alive and template control
             if is_qwen:
                 payload["keep_alive"] = "5m"
+        else:
+            # Cloud APIs (Groq, OpenAI, etc.)
+            payload["max_tokens"] = 2048
 
         max_retries = 5
         last_error: Exception | None = None
 
         logger.info("Calling LLM: %s model=%s", self.api_base, self.model)
 
-        # Ollama may need extra time for model loading; Groq/cloud APIs are faster
-        read_timeout = 300 if "localhost" in self.api_base else 120
+        # Ollama may need extra time for model loading + inference on first run.
+        # A 9-10B model at Q4 can take 60-120s to load + 60-120s to infer.
+        read_timeout = 600 if "localhost" in self.api_base else 120
 
         for attempt in range(1, max_retries + 1):
             try:
@@ -271,11 +324,12 @@ class OpenAIScriptGenerator(ScriptGeneratorBase):
                     # Tolerate alternate key names (Qwen3.5 sometimes varies)
                     scene_num = s.get("scene_number") or s.get("scene") or i
                     scene_text = s.get("text") or s.get("narration") or s.get("description", "")
+                    img_prompt = s.get("image_prompt") or s.get("image_desc") or s.get("visual", "")
                     scenes.append(
                         SceneData(
                             scene_number=int(scene_num),
                             text=scene_text,
-                            image_prompt=s.get("image_prompt", ""),
+                            image_prompt=img_prompt,
                             mood=s.get("mood", "neutral"),
                         )
                     )
@@ -299,6 +353,13 @@ class OpenAIScriptGenerator(ScriptGeneratorBase):
                 if isinstance(e, httpx.HTTPStatusError) and e.response.status_code == 429:
                     wait = min(60, 15 * attempt)  # 15, 30, 45, 60, 60
                     logger.warning("Rate limited (429) on attempt %d, waiting %ds…", attempt, wait)
+                elif isinstance(e, httpx.TimeoutException):
+                    wait = 3 * attempt
+                    logger.warning(
+                        "LLM request timed out on attempt %d/%d (%s). "
+                        "Ollama may still be loading the model. Waiting %ds…",
+                        attempt, max_retries, type(e).__name__, wait,
+                    )
                 else:
                     wait = 3 * attempt
                     logger.warning("HTTP error on attempt %d: %s", attempt, e)
@@ -320,7 +381,12 @@ class OpenAIScriptGenerator(ScriptGeneratorBase):
                     await asyncio.sleep(2 * attempt)
                     continue
 
-        raise RuntimeError(f"Failed to generate scenes after {max_retries} attempts: {last_error}")
+        err_type = type(last_error).__name__ if last_error is not None else "UnknownError"
+        err_msg = str(last_error) if last_error is not None else "no error details captured"
+        raise RuntimeError(
+            f"Failed to generate scenes after {max_retries} attempts: "
+            f"{err_type}: {err_msg}"
+        )
 
 
 # ── Factory ────────────────────────────────────────────────────────────────────

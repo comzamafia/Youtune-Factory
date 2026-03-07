@@ -57,8 +57,8 @@ def build_final_video(
 
         current_input = concat_output
 
-        # Step 3 — Burn subtitles (if provided)
-        if subtitle_path and subtitle_path.exists():
+        # Step 3 — Burn subtitles (if provided and enabled)
+        if settings.subtitle_enabled and subtitle_path and subtitle_path.exists():
             sub_output = output_path.with_suffix(".sub.mp4")
             # Escape backslashes and colons for FFmpeg subtitles filter on Windows
             sub_str = str(subtitle_path.resolve()).replace("\\", "/").replace(":", "\\:")
@@ -69,28 +69,30 @@ def build_final_video(
             #   WrapStyle=1   → wrap at word boundary (line length controlled by SRT chunks)
             #   Outline=2     → black outline for readability on any background
             #   Shadow=1      → subtle drop shadow
+            # Use Sarabun font bundled in font/ directory
+            font_dir = str((settings.root_path / "font" / "Sarabun").resolve()).replace("\\", "/")
             sub_style = (
-                f"FontName=Garuda,"
+                f"FontName=Sarabun Bold,"
                 f"FontSize={settings.subtitle_font_size},"
                 f"PrimaryColour=&Hffffff&,"
                 f"OutlineColour=&H000000&,"
                 f"Outline=2,Shadow=1,"
                 f"Alignment=2,"
                 f"MarginV={settings.subtitle_margin_v},"
-                f"MarginL=40,MarginR=40,"
+                f"MarginL={settings.subtitle_margin_h},MarginR={settings.subtitle_margin_h},"
                 f"WrapStyle=1"
             )
-            vf = f"subtitles='{sub_str}':force_style='{sub_style}'"
+            vf = f"subtitles='{sub_str}':fontsdir='{font_dir}':force_style='{sub_style}'"
 
             cmd_sub = [
                 "ffmpeg", "-y",
                 "-i", str(current_input),
                 "-vf", vf,
             ]
-            if settings.use_gpu:
-                cmd_sub.extend(["-c:v", settings.ffmpeg_vcodec])
-            else:
-                cmd_sub.extend(["-c:v", "libx264", "-preset", "ultrafast", "-threads", "1"])
+            vcodec = settings.ffmpeg_vcodec if settings.use_gpu else "libx264"
+            cmd_sub.extend(["-c:v", vcodec])
+            if vcodec == "libx264":
+                cmd_sub.extend(["-preset", "ultrafast", "-threads", "1"])
             cmd_sub.extend(["-c:a", "copy", str(sub_output)])
 
             logger.info("Burning subtitles…")
@@ -137,6 +139,22 @@ def build_final_video(
         for suffix in (".concat.mp4", ".sub.mp4", ".music.mp4"):
             tmp = output_path.with_suffix(suffix)
             tmp.unlink(missing_ok=True)
+
+
+def build_16x9_from_vertical(input_path: Path, output_path: Path) -> Path:
+    """Convert 9:16 vertical video to 16:9 horizontal with pillarbox black bars."""
+    vcodec = settings.ffmpeg_vcodec if settings.use_gpu else "libx264"
+    cmd = [
+        "ffmpeg", "-y", "-i", str(input_path),
+        "-vf", "scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2:color=black",
+        "-c:v", vcodec,
+    ]
+    if vcodec == "libx264":
+        cmd.extend(["-preset", "ultrafast"])
+    cmd.extend(["-c:a", "copy", str(output_path)])
+    logger.info("Building 16:9 version → %s", output_path.name)
+    _run_ffmpeg(cmd, timeout=300)
+    return output_path
 
 
 def _run_ffmpeg(cmd: list[str], timeout: int = 600) -> None:

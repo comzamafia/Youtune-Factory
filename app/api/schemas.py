@@ -76,8 +76,10 @@ class SceneResponse(BaseModel):
 class VideoResponse(BaseModel):
     id: uuid.UUID
     novel_id: uuid.UUID
+    novel_title: Optional[str] = None
     part_number: int = 1
     video_path: Optional[str] = None
+    video_path_16x9: Optional[str] = None
     subtitle_path: Optional[str] = None
     thumbnail: Optional[str] = None
     youtube_url: Optional[str] = None
@@ -97,6 +99,7 @@ class JobResponse(BaseModel):
     status: str
     priority: int
     error_message: Optional[str] = None
+    current_step: Optional[str] = None
     created_at: datetime
     started_at: Optional[datetime] = None
     finished_at: Optional[datetime] = None

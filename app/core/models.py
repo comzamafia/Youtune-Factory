@@ -120,6 +120,7 @@ class Video(Base):
     )
     part_number: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
     video_path: Mapped[str | None] = mapped_column(Text, nullable=True)
+    video_path_16x9: Mapped[str | None] = mapped_column(Text, nullable=True)
     subtitle_path: Mapped[str | None] = mapped_column(Text, nullable=True)
     thumbnail: Mapped[str | None] = mapped_column(Text, nullable=True)
     youtube_url: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -164,6 +165,7 @@ class Job(Base):
     )
     priority: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
+    current_step: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, default=_utcnow
     )
