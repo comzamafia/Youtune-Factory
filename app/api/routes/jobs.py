@@ -8,11 +8,27 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from app.api.auth import verify_token
-from app.api.schemas import JobResponse
+from app.api.schemas import JobResponse, QueueStatusResponse
+from app.config import settings
 from app.core.database import get_db
 from app.core.models import Job
 
 router = APIRouter(prefix="/jobs", tags=["jobs"])
+
+
+@router.get("/queue-status", response_model=QueueStatusResponse)
+def queue_status(
+    db: Session = Depends(get_db),
+    _token: str = Depends(verify_token),
+):
+    """Return current queue depth and running job count."""
+    waiting = db.query(Job).filter(Job.status == "queued").count()
+    running = db.query(Job).filter(Job.status == "running").count()
+    mem_depth = 0
+    if not settings.use_celery:
+        from app.core.sync_pipeline import queue_depth
+        mem_depth = queue_depth()
+    return QueueStatusResponse(queued=waiting, running=running, mem_queue_depth=mem_depth)
 
 
 @router.get("", response_model=list[JobResponse])

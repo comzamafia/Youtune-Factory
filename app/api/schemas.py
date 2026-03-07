@@ -109,6 +109,15 @@ class JobResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
+# ── Queue ─────────────────────────────────────────────────────────────────────
+
+
+class QueueStatusResponse(BaseModel):
+    queued: int
+    running: int
+    mem_queue_depth: int
+
+
 # ── Pipeline ───────────────────────────────────────────────────────────────────
 
 

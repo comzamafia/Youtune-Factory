@@ -168,9 +168,10 @@ header h1 span{color:var(--accent)}
 
     <!-- Jobs Tab -->
     <div class="tab-content" id="tab-jobs">
-      <div style="margin-bottom:16px;display:flex;gap:8px">
+      <div style="margin-bottom:16px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
         <button class="btn btn-outline" onclick="loadJobs()">🔄 รีเฟรช</button>
         <button class="btn btn-sm btn-danger" id="clearJobsBtn" onclick="clearAllJobs(this)"><span class="spinner"></span> 🗑 ลบงานทั้งหมด</button>
+        <div id="queueBanner" style="margin-left:8px;font-size:13px;color:var(--text2)"></div>
       </div>
       <div id="jobList"></div>
     </div>
@@ -572,7 +573,7 @@ function jobCard(j) {
     ? `<div style="font-size:12px;color:var(--text2);margin-top:4px">⏱ เวลาที่ใช้: <b><span id="elapsed-${j.job_id}">…</span></b></div>` : '';
   const doneHtml = isDone && j.started_at && j.finished_at
     ? `<div style="font-size:12px;color:var(--green);margin-top:4px">✅ เสร็จภายใน <b>${fmtDuration(j.started_at, j.finished_at)}</b></div>` : '';
-  const queuedHtml = isQueued ? `<div style="font-size:12px;color:var(--yellow);margin-top:4px">⏸ รอคิว…</div>` : '';
+  const queuedHtml = isQueued ? `<div style="font-size:12px;color:var(--yellow);margin-top:4px">⏸ รอคิว — ลำดับที่ <b id="qpos-${j.job_id}">…</b> ในคิว</div>` : '';
   const errorHtml = isFailed && j.error_message
     ? `<div class="job-error-box"><div class="job-error-title">❌ เกิดข้อผิดพลาด</div><div class="job-error-msg">${esc(j.error_message)}</div></div>` : '';
   const resumeHtml = isFailed && j.novel_id
@@ -609,12 +610,29 @@ async function loadJobs() {
   let jobs = [];
   try {
     jobs = await api('/jobs?limit=50');
-    if (!jobs.length) { el.innerHTML = '<div class="empty"><div class="empty-icon">⚙️</div>ยังไม่มีงาน</div>'; stopJobTimers(); return; }
+    if (!jobs.length) { el.innerHTML = '<div class="empty"><div class="empty-icon">⚙️</div>ยังไม่มีงาน</div>'; stopJobTimers();
+      document.getElementById('queueBanner').innerHTML = ''; return;
+    }
     el.innerHTML = jobs.map(j => {
       if (j.status === 'running' && j.started_at) _runningJobTimes[j.job_id] = j.started_at;
       return jobCard(j);
     }).join('');
+    // Assign queue positions to waiting jobs
+    let pos = 1;
+    jobs.filter(j => j.status === 'queued').forEach(j => {
+      const el2 = document.getElementById('qpos-' + j.job_id);
+      if (el2) el2.textContent = pos++;
+    });
     tickJobClocks(); // immediate update without waiting 1s
+    // Update queue banner
+    const queueBanner = document.getElementById('queueBanner');
+    try {
+      const qs = await api('/jobs/queue-status');
+      const parts = [];
+      if (qs.running > 0) parts.push(`⚡ กำลังทำงาน ${qs.running} งาน`);
+      if (qs.queued > 0) parts.push(`🟡 รอคิว ${qs.queued} งาน`);
+      queueBanner.innerHTML = parts.length ? parts.join(' &nbsp;·&nbsp; ') : '✅ คิวว่าง';
+    } catch(_) { queueBanner.innerHTML = ''; }
   } catch (e) {
     el.innerHTML = '<div class="empty" style="color:var(--red)">โหลดไม่สำเร็จ: ' + e.message + '</div>';
   }

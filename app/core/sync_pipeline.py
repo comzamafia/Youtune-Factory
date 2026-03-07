@@ -3,12 +3,16 @@
 Used when ``USE_CELERY=false`` (e.g. single-dyno Railway deploys without a
 separate worker service).  The API still returns immediately with a job ID;
 the actual work happens on a daemon thread.
+
+Jobs are serialized through a global queue — only ONE pipeline runs at a time.
+Additional jobs wait in the queue (status="queued") until the current job finishes.
 """
 
 from __future__ import annotations
 
 import asyncio
 import logging
+import queue
 import threading
 import uuid
 from datetime import datetime, timezone
@@ -21,6 +25,36 @@ from app.core.story_processor import assign_media_to_scenes
 from app.core.utils import safe_filename
 
 logger = logging.getLogger(__name__)
+
+# ── Global job queue (FIFO, serialized execution) ─────────────────────────────
+# Each item: (novel_id_str, job_id_str, resume_bool)
+_job_queue: queue.Queue[tuple[str, str, bool]] = queue.Queue()
+_queue_worker_started = False
+_queue_lock = threading.Lock()
+
+
+def _queue_worker():
+    """Single background thread that drains the job queue one-at-a-time."""
+    logger.info("Pipeline queue worker started.")
+    while True:
+        novel_id, job_id, resume = _job_queue.get()
+        try:
+            logger.info("Queue worker: starting job %s (novel=%s, resume=%s)", job_id, novel_id, resume)
+            _pipeline_thread(novel_id, job_id, resume)
+        except Exception as exc:
+            logger.exception("Queue worker: unhandled exception for job %s: %s", job_id, exc)
+        finally:
+            _job_queue.task_done()
+
+
+def _ensure_worker():
+    """Start the queue worker thread if not already running (idempotent)."""
+    global _queue_worker_started
+    with _queue_lock:
+        if not _queue_worker_started:
+            t = threading.Thread(target=_queue_worker, daemon=True, name="pipeline-queue-worker")
+            t.start()
+            _queue_worker_started = True
 
 
 def _run_async(coro):
@@ -57,13 +91,19 @@ def _set_job(
     db.commit()
 
 
-# ── Public entry point ────────────────────────────────────────────────────────
+def queue_depth() -> int:
+    """Return the number of jobs currently waiting in the queue (not yet started)."""
+    return _job_queue.qsize()
+
+
+# ── Public entry points ───────────────────────────────────────────────────────
 
 def run_pipeline_sync(novel_id: str | uuid.UUID) -> str:
-    """Create a pipeline job and start the sync pipeline on a daemon thread.
+    """Enqueue a full pipeline job. Returns the job ID immediately.
 
-    Returns the job ID immediately.
+    The job runs after all previously queued jobs complete (FIFO).
     """
+    _ensure_worker()
     nid = uuid.UUID(str(novel_id))
     db = SessionLocal()
     try:
@@ -75,23 +115,18 @@ def run_pipeline_sync(novel_id: str | uuid.UUID) -> str:
     finally:
         db.close()
 
-    t = threading.Thread(
-        target=_pipeline_thread,
-        args=(str(nid), str(job_id), False),
-        daemon=True,
-        name=f"pipeline-{nid}",
-    )
-    t.start()
-    logger.info("Sync pipeline started for novel %s (job=%s)", nid, job_id)
+    _job_queue.put((str(nid), str(job_id), False))
+    pos = _job_queue.qsize()
+    logger.info("Sync pipeline enqueued for novel %s (job=%s, queue_depth=%d)", nid, job_id, pos)
     return str(job_id)
 
 
 def resume_pipeline_sync(novel_id: str | uuid.UUID) -> str:
-    """Resume a failed/incomplete pipeline from where it left off.
+    """Enqueue a resume pipeline job. Returns the job ID immediately.
 
-    Skips any steps that have already produced valid output files.
-    Returns the new job ID immediately.
+    Skips steps that already have valid output files on disk.
     """
+    _ensure_worker()
     nid = uuid.UUID(str(novel_id))
     db = SessionLocal()
     try:
@@ -103,14 +138,9 @@ def resume_pipeline_sync(novel_id: str | uuid.UUID) -> str:
     finally:
         db.close()
 
-    t = threading.Thread(
-        target=_pipeline_thread,
-        args=(str(nid), str(job_id), True),
-        daemon=True,
-        name=f"pipeline-resume-{nid}",
-    )
-    t.start()
-    logger.info("Sync pipeline RESUME started for novel %s (job=%s)", nid, job_id)
+    _job_queue.put((str(nid), str(job_id), True))
+    pos = _job_queue.qsize()
+    logger.info("Sync pipeline RESUME enqueued for novel %s (job=%s, queue_depth=%d)", nid, job_id, pos)
     return str(job_id)
 
 
