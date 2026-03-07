@@ -165,7 +165,7 @@ class OpenAIScriptGenerator(ScriptGeneratorBase):
             ) as client:
                 resp = await client.post(
                     f"{ollama_base}/api/generate",
-                    json={"model": self.model, "prompt": "", "keep_alive": "1h"},
+                    json={"model": self.model, "prompt": "", "keep_alive": "1h", "stream": False},
                 )
                 resp.raise_for_status()
             logger.info("Model '%s' ready in %.1fs", self.model, time.monotonic() - start)
@@ -259,14 +259,17 @@ class OpenAIScriptGenerator(ScriptGeneratorBase):
         # (max_tokens via OpenAI compat layer caps thinking+output combined,
         #  causing empty responses when thinking uses all tokens)
         # num_predict: 4096 is plenty for scene JSON output (no thinking mode)
-        # num_ctx: 4096 covers novel chunks (max 3000 chars) + system prompt
+        # num_ctx: 16384 — Thai text is dense (~1-2 chars/token); a 6000-char
+        #   chunk can consume 3000-6000 tokens, easily overflowing num_ctx=4096
+        #   which causes Ollama to silently clip input → bad/truncated JSON.
         if "localhost:11434" in self.api_base:
             payload["options"] = {
                 "num_predict": 4096,
-                "num_ctx": 4096,
+                "num_ctx": 16384,
             }
-            if is_qwen:
-                payload["keep_alive"] = "5m"
+            # keep_alive for ALL local models (not just Qwen) so the model
+            # stays hot between chunks and doesn't cause timeout on reload.
+            payload["keep_alive"] = "1h"
         else:
             # Cloud APIs (Groq, OpenAI, etc.)
             payload["max_tokens"] = 2048
