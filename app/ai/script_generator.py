@@ -44,32 +44,32 @@ class ScriptGeneratorBase(ABC):
 
 
 SYSTEM_PROMPT = """\
-You are a JSON-only video scriptwriter. You NEVER output markdown, tables, or explanations.
-Your task is to split a novel excerpt into short video scenes.
-
-Rules:
-- Each scene should last 5-8 seconds when narrated.
-- Keep the original language of the text.
-- For each scene provide: scene text, a detailed image prompt (English, for AI image generation), and a mood keyword.
-- Return ONLY a JSON array. No other text before or after.
-- Keys must be exactly: scene_number, text, image_prompt, mood
-- Do NOT wrap in markdown code fences or backticks.
-- Do NOT include any explanation, thinking, comments, or markdown.
-- Your entire response must start with [ and end with ]
+You are a JSON array generator. Output ONLY valid JSON. No explanations, no markdown, no format descriptions.
+Split the novel text into video scenes.
+Each scene: 5-8 seconds when narrated.
+Keep original language. Image prompts must be English.
+Keys: scene_number (int), text (string), image_prompt (string), mood (string).
+START your response with [ and END with ]. Nothing else.
 """
 
 USER_PROMPT_TEMPLATE = """\
-Novel Title: {title}
+Title: {title}
 
-Split the following novel text into video scenes:
-
----
+Novel text:
 {text}
----
 
-Return a JSON array. Example element:
-{{"scene_number": 1, "text": "...", "image_prompt": "...", "mood": "mysterious"}}
+Output JSON array only. Start with [:
+[{{"scene_number":1,"text":"first scene text here","image_prompt":"English image description","mood":"neutral"}},
+...
+]
 """
+
+RETRY_SUFFIX = """
+
+CRITICAL: Your previous response was not a JSON array.
+Do NOT describe the format. Do NOT say anything.
+Just output the JSON array starting with [ right now.
+["""
 
 
 def _extract_json_array(raw: str) -> list[dict[str, Any]]:
@@ -83,7 +83,7 @@ def _extract_json_array(raw: str) -> list[dict[str, Any]]:
     """
     cleaned = raw.strip()
 
-    # 1. Remove <think>...</think> blocks (Qwen3.5)
+    # 1. Remove <think>...</think> blocks (Qwen3.5 thinking mode)
     cleaned = re.sub(r"<think>.*?</think>", "", cleaned, flags=re.DOTALL).strip()
 
     # 2. Remove markdown code fences
@@ -92,7 +92,16 @@ def _extract_json_array(raw: str) -> list[dict[str, Any]]:
         if match:
             cleaned = match.group(1).strip()
 
-    # 3. Try direct parse
+    # 3. Strip any leading non-JSON lines (e.g. "**Output Format:**" explanations)
+    #    Find the first '[' and discard everything before it
+    bracket_pos = cleaned.find("[")
+    if bracket_pos > 0:
+        leading = cleaned[:bracket_pos]
+        # Only strip if the leading text looks like prose/markdown (not part of JSON)
+        if not leading.strip().startswith("{"):
+            cleaned = cleaned[bracket_pos:]
+
+    # 4. Try direct parse
     try:
         result = json.loads(cleaned)
         if isinstance(result, list):
@@ -100,7 +109,7 @@ def _extract_json_array(raw: str) -> list[dict[str, Any]]:
     except json.JSONDecodeError:
         pass
 
-    # 4. Regex fallback: find first [ ... ] block
+    # 5. Regex fallback: find first [ ... ] block
     match = re.search(r"\[.*\]", cleaned, re.DOTALL)
     if match:
         try:
@@ -108,7 +117,7 @@ def _extract_json_array(raw: str) -> list[dict[str, Any]]:
         except json.JSONDecodeError:
             pass
 
-    # 5. Try to fix truncated JSON by finding complete objects within the array
+    # 6. Try to fix truncated JSON by finding complete objects within the array
     if "[" in cleaned:
         start_idx = cleaned.index("[")
         fragment = cleaned[start_idx:]
@@ -237,43 +246,31 @@ class OpenAIScriptGenerator(ScriptGeneratorBase):
         """Generate scenes for a single chunk of novel text."""
         import asyncio
 
-        user_msg = USER_PROMPT_TEMPLATE.format(title=title, text=chunk_text)
+        base_user_msg = USER_PROMPT_TEMPLATE.format(title=title, text=chunk_text)
         if total_chunks > 1:
-            user_msg += f"\n(This is part {chunk_number} of {total_chunks} — continue numbering from 1 for this chunk)"
+            base_user_msg += f"\n(Part {chunk_number} of {total_chunks} — start scene_number from 1 for this chunk)"
 
         # Qwen3.5: append /no_think to disable thinking mode (saves tokens)
         is_qwen = "qwen" in self.model.lower()
         if is_qwen:
-            user_msg += "\n/no_think"
+            base_user_msg += "\n/no_think"
 
-        payload: dict = {
-            "model": self.model,
-            "messages": [
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user", "content": user_msg},
-            ],
-            "temperature": 0.4,
-        }
-
-        # Ollama-specific: use num_predict instead of max_tokens
-        # (max_tokens via OpenAI compat layer caps thinking+output combined,
-        #  causing empty responses when thinking uses all tokens)
-        # num_predict: 8192 — 13 scenes × ~200 tokens/scene JSON ≈ 2600 tokens;
-        #   use 8192 to give ample room for larger novels without truncation.
-        # num_ctx: 16384 — Thai text is dense (~1-2 chars/token); a 6000-char
-        #   chunk can consume 3000-6000 tokens, easily overflowing num_ctx=4096
-        #   which causes Ollama to silently clip input → bad/truncated JSON.
-        if "localhost:11434" in self.api_base:
-            payload["options"] = {
-                "num_predict": 8192,
-                "num_ctx": 16384,
+        def _build_payload(user_msg: str, attempt: int) -> dict:
+            p: dict = {
+                "model": self.model,
+                "messages": [
+                    {"role": "system", "content": SYSTEM_PROMPT},
+                    {"role": "user", "content": user_msg},
+                ],
+                "temperature": 0.3 if attempt == 1 else 0.1,
             }
-            # keep_alive for ALL local models (not just Qwen) so the model
-            # stays hot between chunks and doesn't cause timeout on reload.
-            payload["keep_alive"] = "1h"
-        else:
-            # Cloud APIs (Groq, OpenAI, etc.)
-            payload["max_tokens"] = 2048
+            if "localhost:11434" in self.api_base:
+                p["options"] = {"num_predict": 8192, "num_ctx": 16384}
+                p["keep_alive"] = "1h"
+                p["format"] = "json"  # Force Ollama JSON output mode
+            else:
+                p["max_tokens"] = 2048
+            return p
 
         max_retries = 5
         last_error: Exception | None = None
@@ -285,6 +282,13 @@ class OpenAIScriptGenerator(ScriptGeneratorBase):
         read_timeout = 600 if "localhost" in self.api_base else 120
 
         for attempt in range(1, max_retries + 1):
+            # On retries: add aggressive suffix to force JSON output
+            if attempt == 1:
+                user_msg = base_user_msg
+            else:
+                user_msg = base_user_msg + RETRY_SUFFIX
+            payload = _build_payload(user_msg, attempt)
+
             try:
                 async with httpx.AsyncClient(
                     timeout=httpx.Timeout(connect=10, read=read_timeout, write=30, pool=10)
